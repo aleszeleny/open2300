@@ -96,6 +96,25 @@ struct timestamp
 	int year;
 };
 
+struct weather_dataset
+{
+	double temperature_indoor;
+	double temperature_outdoor;
+	double dewpoint;
+	int    humidity_indoor;
+	int    humidity_outdoor;
+	double wind_speed;
+	double wind_angle[6];
+	char   *wind_direction;
+	double wind_chill;
+	double rain_1h;
+	double rain_24h;
+	double rain_total;
+	double rel_pressure;
+	char   tendency[15];
+	char   forecast[15];
+};
+
 
 /* Weather data functions */
 

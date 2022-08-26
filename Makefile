@@ -10,6 +10,11 @@
 # This makefile is made for Linux.
 # For Windows version modify the CC_LDFLAG by adding a -lwsock32
 #
+# RPI GCC >=9 https://forums.raspberrypi.com/viewtopic.php?t=333821
+# Seems like for GCC >=9 Linker in the latest RPI release requires to specified objects files first follow
+# by shared libraries from left to right in the build command.
+# see also https://github.com/Infineon/linux-optiga-trust-m/commit/8bcdd37295b943476f9344cba96b3aa99bae2177
+#
 # You may want to adjust the 3 directories below
 
 prefix = /usr/local
@@ -37,10 +42,10 @@ LIBOBJ = rw2300.o linux2300.o
 VERSION = 1.11
 
 MYCPPFLAGS = -DVERSION=\"$(VERSION)\"
-CFLAGS = -Wall -O3
-CC_LDFLAGS = -L. -lm -l2300
+CFLAGS = -Wall -O3 -g
+CC_LDFLAGS = -L. -l2300 -lm
 INSTALL = install
-MAKE_EXEC = $(CC) $(CPPFLAGS) $(MYCPPFLAGS) $(CFLAGS) $@.c -o $@ $(LDFLAGS) $(CC_LDFLAGS)
+MAKE_EXEC = $(CC) $@.c $(CPPFLAGS) $(MYCPPFLAGS) $(CFLAGS) $(LDFLAGS) $(CC_LDFLAGS) -o $@
 
 ####### Build rules
 
@@ -91,7 +96,7 @@ mysql2300: $(LIB)
 	$(CC) $(CFLAGS) $@.c -o $@ -I/usr/include/mysql -L/usr/lib/mysql $(CC_LDFLAGS) -lmysqlclient
 
 pgsql2300: $(LIB)
-	$(CC) $(CFLAGS) $@.c -o $@ -I/usr/include/pgsql -L/usr/lib/pgsql $(CC_LDFLAGS) -lpq
+	$(CC) $(CFLAGS) $@.c -o $@ -I/usr/include/postgresql -L/usr/lib/postgresql $(CC_LDFLAGS) -lpq
 
 sqlitelog2300: $(LIB)
 	$(CC) $(CPPFLAGS) $(MYCPPFLAGS) $(CFLAGS) $@.c -o $@ $(LDFLAGS) $(CC_LDFLAGS) -lsqlite3
