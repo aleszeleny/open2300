@@ -173,6 +173,8 @@ int main(int argc, char *argv[])
 //	strcat(logvalues, tempstring);
 
 
+// add the speed reset see open2300_zalohy/zafod/open2300/pgsql2300.c
+
 	/* READ WIND SPEED AND DIRECTION aND WINDCHILL */
 
   ws_data.wind_speed = wind_all(ws2300,
@@ -272,7 +274,7 @@ int main(int argc, char *argv[])
       ws_data.rain_1h, ws_data.rain_24h, ws_data.rain_total,
       ws_data.tendency, ws_data.forecast);
 
-  printf("%s", *sql_query);
+  printf("%s", sql_query);
 
   free(ws_data.wind_direction);
 
@@ -291,12 +293,12 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		res = PQexec(conn, *sql_query);
+		res = PQexec(conn, sql_query);
 	
 		if (PQresultStatus(res) == PGRES_COMMAND_OK)
 			retval = 0;
 		else
-			fprintf(stderr, "Could not insert row. %s:\n%s\n", PQresultErrorMessage(res), *sql_query);
+			fprintf(stderr, "Could not insert row. %s:\n%s\n", PQresultErrorMessage(res), sql_query);
 				
 		PQclear(res);
 	}
