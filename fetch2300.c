@@ -8,6 +8,8 @@
  *  This program is published under the GNU General Public license
  */
 
+#define DEBUG 1
+
 #include "rw2300.h"
 
  
@@ -40,15 +42,19 @@ int main(int argc, char *argv[])
 	struct timestamp time_min, time_max;
 	time_t basictime;
 
+	if (DEBUG) printf("DEBUG:%s:%d\tget_configuration()\n", __FILE__, __LINE__);
 	get_configuration(&config, argv[1]);
 
+	if (DEBUG) printf("DEBUG:%s:%d\topen_weatherstation()\n", __FILE__, __LINE__);
 	ws2300 = open_weatherstation(config.serial_device_name);
 
 
 	/* READ TEMPERATURE INDOOR */
 
+	if (DEBUG) printf("DEBUG:%s:%d\ttemperature_indoor()\n", __FILE__, __LINE__);
 	sprintf(logline, "Ti %.1f\n", temperature_indoor(ws2300, config.temperature_conv) );
 
+	if (DEBUG) printf("DEBUG:%s:%d\ttemperature_indoor_minmax()\n", __FILE__, __LINE__);
 	temperature_indoor_minmax(ws2300, config.temperature_conv, &tempfloat_min,
 	                          &tempfloat_max, &time_min, &time_max);
 
@@ -63,9 +69,11 @@ int main(int argc, char *argv[])
 
 	/* READ TEMPERATURE OUTDOOR */
 
+	if (DEBUG) printf("DEBUG:%s:%d\ttemperature_outdoor()\n", __FILE__, __LINE__);
 	sprintf(tempstring, "To %.1f\n", temperature_outdoor(ws2300, config.temperature_conv) );
 	strcat(logline, tempstring);
 
+	if (DEBUG) printf("DEBUG:%s:%d\ttemperature_outdoor_minmax()\n", __FILE__, __LINE__);
 	temperature_outdoor_minmax(ws2300, config.temperature_conv, &tempfloat_min,
 	                           &tempfloat_max, &time_min, &time_max);
 
@@ -80,9 +88,11 @@ int main(int argc, char *argv[])
 
 	/* READ DEWPOINT */
 
+	if (DEBUG) printf("DEBUG:%s:%d\tdewpoint()\n", __FILE__, __LINE__);
 	sprintf(tempstring, "DP %.1f\n", dewpoint(ws2300, config.temperature_conv) );
 	strcat(logline, tempstring);
 
+	if (DEBUG) printf("DEBUG:%s:%d\tdewpoint_minmax()\n", __FILE__, __LINE__);
 	dewpoint_minmax(ws2300, config.temperature_conv, &tempfloat_min,
 	                &tempfloat_max, &time_min, &time_max);
 
@@ -97,6 +107,7 @@ int main(int argc, char *argv[])
 
 	/* READ RELATIVE HUMIDITY INDOOR */
 
+	if (DEBUG) printf("DEBUG:%s:%d\thumidity_indoor_all()\n", __FILE__, __LINE__);
 	sprintf(tempstring, "RHi %d\n", humidity_indoor_all(ws2300, &tempint_min, &tempint_max,
 	                                                    &time_min, &time_max) );
 	strcat(logline, tempstring);
@@ -112,6 +123,7 @@ int main(int argc, char *argv[])
 
 	/* READ RELATIVE HUMIDITY OUTDOOR */
 
+	if (DEBUG) printf("DEBUG:%s:%d\thumidity_outdoor_all()\n", __FILE__, __LINE__);
 	sprintf(tempstring, "RHo %d\n", humidity_outdoor_all(ws2300, &tempint_min, &tempint_max,
 	                                                  &time_min, &time_max) );
 	strcat(logline, tempstring);
@@ -127,6 +139,7 @@ int main(int argc, char *argv[])
 
 	/* READ WIND SPEED AND DIRECTION */
 
+	if (DEBUG) printf("DEBUG:%s:%d\twind_all()\n", __FILE__, __LINE__);
 	sprintf(tempstring,"WS %.1f\n",
 	       wind_all(ws2300, config.wind_speed_conv_factor, &tempint, winddir));
 	strcat(logline, tempstring);
@@ -140,9 +153,11 @@ int main(int argc, char *argv[])
 
 	/* WINDCHILL */
 
+	if (DEBUG) printf("DEBUG:%s:%d\twindchill()\n", __FILE__, __LINE__);
 	sprintf(tempstring, "WC %.1f\n", windchill(ws2300, config.temperature_conv) );
 	strcat(logline, tempstring);
 
+	if (DEBUG) printf("DEBUG:%s:%d\twindchill_minmax()\n", __FILE__, __LINE__);
 	windchill_minmax(ws2300, config.temperature_conv, &tempfloat_min,
 	                 &tempfloat_max, &time_min, &time_max); 
 
@@ -157,6 +172,7 @@ int main(int argc, char *argv[])
 
 	/* READ WINDSPEED MIN/MAX */
 
+	if (DEBUG) printf("DEBUG:%s:%d\twind_minmax()\n", __FILE__, __LINE__);
 	wind_minmax(ws2300, config.wind_speed_conv_factor, &tempfloat_min,
 	            &tempfloat_max, &time_min, &time_max);
 
@@ -171,6 +187,7 @@ int main(int argc, char *argv[])
 
 	/* READ RAIN 1H */
 
+	if (DEBUG) printf("DEBUG:%s:%d\train_1h_all()\n", __FILE__, __LINE__);
 	sprintf(tempstring, "R1h %.2f\n",
 	        rain_1h_all(ws2300, config.rain_conv_factor,
 	                    &tempfloat_max, &time_max));
@@ -185,6 +202,7 @@ int main(int argc, char *argv[])
 
 	/* READ RAIN 24H */
 
+	if (DEBUG) printf("DEBUG:%s:%d\train_24h_all()\n", __FILE__, __LINE__);
 	sprintf(tempstring,"R24h %.2f\n",
 	        rain_24h_all(ws2300, config.rain_conv_factor,
 	                     &tempfloat_max, &time_max));
@@ -199,6 +217,7 @@ int main(int argc, char *argv[])
 
 	/* READ RAIN TOTAL */
 
+	if (DEBUG) printf("DEBUG:%s:%d\train_total_all()\n", __FILE__, __LINE__);
 	sprintf(tempstring,"Rtot %.2f\n",
 	        rain_total_all(ws2300, config.rain_conv_factor, &time_max));
 	strcat(logline, tempstring);
@@ -211,6 +230,7 @@ int main(int argc, char *argv[])
 
 	/* READ RELATIVE PRESSURE */
 
+	if (DEBUG) printf("DEBUG:%s:%d\trel_pressure()\n", __FILE__, __LINE__);
 	sprintf(tempstring,"RP %.3f\n",
 	        rel_pressure(ws2300, config.pressure_conv_factor) );
 	strcat(logline, tempstring);
@@ -218,6 +238,7 @@ int main(int argc, char *argv[])
 
 	/* RELATIVE PRESSURE MIN/MAX */
 
+	if (DEBUG) printf("DEBUG:%s:%d\trel_pressure_minmax()\n", __FILE__, __LINE__);
 	rel_pressure_minmax(ws2300, config.pressure_conv_factor, &tempfloat_min,
 	                    &tempfloat_max, &time_min, &time_max);
 
@@ -232,6 +253,7 @@ int main(int argc, char *argv[])
 
 	/* READ TENDENCY AND FORECAST */
 
+	if (DEBUG) printf("DEBUG:%s:%d\ttendency_forecast()\n", __FILE__, __LINE__);
 	tendency_forecast(ws2300, tendency, forecast);
 	sprintf(tempstring, "Tendency %s\nForecast %s\n", tendency, forecast);
 	strcat(logline, tempstring);
@@ -245,10 +267,13 @@ int main(int argc, char *argv[])
 
 	// Print out and leave
 
+	if (DEBUG) printf("DEBUG:%s:%d\tPrint out and leave()\n", __FILE__, __LINE__);
 	printf("%s%s", datestring, logline);
 
+	if (DEBUG) printf("DEBUG:%s:%d\tclose_weatherstation()\n", __FILE__, __LINE__);
 	close_weatherstation(ws2300);
 
+	if (DEBUG) printf("DEBUG:%s:%d\treturn(0)\n", __FILE__, __LINE__);
 	return(0);
 }
 

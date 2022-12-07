@@ -47,6 +47,14 @@
 #define MILLIBARS           1.0
 #define INCHES_HG           33.8638864
             
+//Logging
+#define LOG_OFF     0
+#define LOG_MIN     1
+#define LOG_MED     2
+#define LOG_MAX     3
+
+#define ATFL  __FILE__, __LINE__
+#define LOG(LVL, MSG) logmsg(config.log_level, LVL, ATFL, MSG)
 
 /* ONLY EDIT THESE IF WEATHER UNDERGROUND CHANGES URL */
 #define WEATHER_UNDERGROUND_BASEURL "weatherstation.wunderground.com"
@@ -63,6 +71,7 @@ typedef struct {
 
 struct config_type
 {
+	int    log_level;                 //0 - console output disabled, higher value means more verbosity
 	char   serial_device_name[50];
 	char   citizen_weather_id[30];
 	char   citizen_weather_passcode[30];
@@ -104,6 +113,10 @@ struct weather_dataset
 	int    humidity_indoor;
 	int    humidity_outdoor;
 	double wind_speed;
+	double wind_speed_min;
+	double wind_speed_max;
+	struct timestamp wind_speed_min_datetime;
+	struct timestamp wind_speed_max_datetime;
 	double wind_angle[6];
 	char   *wind_direction;
 	double wind_chill;
@@ -283,6 +296,8 @@ void write_error_exit(void);
 void print_usage(void);
 
 int get_configuration(struct config_type *, char *path);
+
+void logmsg (const int logconfig, const int loglevel, const char *srcfile, const int srcline, const char *msg);
 
 WEATHERSTATION open_weatherstation(char *device);
 
