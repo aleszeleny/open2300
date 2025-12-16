@@ -1,0 +1,85 @@
+PyOpen2300 - Quick Installation Guide
+=======================================
+
+This is the Python reimplementation of the open2300 weather station tools.
+
+QUICK START
+-----------
+
+1. Install dependencies:
+   pip install -r requirements.txt
+
+2. Install the package:
+   pip install -e .
+
+3. Copy and configure:
+   cp open2300-dist.conf open2300.conf
+   # Edit open2300.conf to set your serial device
+
+4. Test the installation:
+   dumpconfig2300
+   fetch2300
+
+SERIAL PORT ACCESS
+------------------
+
+You need read/write access to your serial device:
+
+  sudo chmod 666 /dev/ttyS0
+
+Or add your user to the dialout group:
+
+  sudo usermod -a -G dialout $USER
+  # Then logout and login again
+
+AVAILABLE COMMANDS
+------------------
+
+After installation, these commands will be available:
+
+Basic tools:
+  - open2300         Low-level read/write operations
+  - dump2300         Dump memory range to file
+  - bin2300          Dump memory in binary format
+  - dumpconfig2300   Display current configuration
+
+Data reading:
+  - fetch2300        Fetch all current weather data
+  - log2300          Log current data to file
+  - xml2300          Export data to XML
+
+Network services:
+  - wu2300           Upload to Weather Underground
+
+Database logging:
+  - pgsql2300        Log to PostgreSQL (requires psycopg2-binary)
+  - sqlitelog2300    Log to SQLite (built-in)
+
+Station control:
+  - light2300        Control LCD backlight
+  - interval2300     Read/set history logging interval
+  - minmax2300       Reset min/max values (simplified)
+
+History:
+  - history2300      Read history records
+  - histlog2300      Log history data (simplified)
+
+OPTIONAL DEPENDENCIES
+---------------------
+
+For PostgreSQL support:
+  pip install psycopg2-binary
+
+DIFFERENCES FROM C VERSION
+---------------------------
+
+- MySQL support removed (use PostgreSQL or SQLite instead)
+- Some advanced features are simplified placeholders
+- Python-native serial communication using pyserial
+
+For full documentation, see README-PYTHON.md
+
+Original C version by Kenneth Lavrsen (2003-2006)
+Python port 2025
+License: GPL v2.0 or later
+

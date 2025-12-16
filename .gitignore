@@ -21,3 +21,5 @@ wu2300
 xml2300
 .*.un~
 ._*
+.cursor/
+.vscode/
