@@ -1,0 +1,111 @@
+================================================================================
+                    PyOpen2300 - Installation Guide
+================================================================================
+
+QUICK INSTALL
+-------------
+
+1. Navigate to Python implementation directory:
+   cd python-implementation
+
+2. Install dependencies:
+   
+   For x86/x64 (Linux, macOS, Windows):
+     pip install -r requirements.txt
+   
+   For Raspberry Pi (including RPi2):
+     pip3 install -r requirements-rpi.txt
+
+3. Install the package:
+   pip install -e .
+
+4. Configure:
+   cp ../open2300-dist.conf open2300.conf
+   nano open2300.conf
+   # Set your serial device (e.g., /dev/ttyS0 or /dev/ttyAMA0)
+
+5. Test:
+   dumpconfig2300
+   fetch2300
+
+SERIAL PORT ACCESS
+------------------
+
+Linux:
+  sudo usermod -a -G dialout $USER
+  # Logout and login for changes to take effect
+
+Raspberry Pi:
+  sudo raspi-config
+  # Navigate to: Interfacing Options → Serial
+  # Login shell: No, Serial hardware: Yes
+  sudo usermod -a -G dialout $USER
+  # Logout and login
+
+PLATFORM-SPECIFIC
+-----------------
+
+For detailed Raspberry Pi installation:
+  See: INSTALL-RASPBERRY-PI.md
+
+For general Python documentation:
+  See: README-PYTHON.md
+
+DIRECTORY STRUCTURE
+-------------------
+
+python-implementation/
+├── pyopen2300/              Python package
+├── examples/                Example scripts
+├── setup.py                 Package setup
+├── requirements.txt         Dependencies (x86/x64)
+├── requirements-rpi.txt     Dependencies (Raspberry Pi)
+├── README.md                Overview
+└── [Documentation files]
+
+CONFIGURATION FILE
+------------------
+
+The configuration file can be placed in:
+  1. python-implementation/open2300.conf (recommended)
+  2. ../open2300.conf (parent directory, shared with C version)
+  3. /usr/local/etc/open2300.conf
+  4. /etc/open2300.conf
+
+You can share the same configuration file with the C implementation.
+
+AVAILABLE COMMANDS
+------------------
+
+After installation, these commands are available system-wide:
+
+  open2300, dump2300, bin2300, fetch2300, log2300, wu2300,
+  pgsql2300, sqlitelog2300, xml2300, light2300, interval2300,
+  minmax2300, history2300, histlog2300, dumpconfig2300
+
+For help on any command:
+  <command> --help
+
+TROUBLESHOOTING
+---------------
+
+Cannot open serial device:
+  - Check permissions: ls -l /dev/ttyS0
+  - Add user to dialout group
+  - On Raspberry Pi, enable serial in raspi-config
+
+Module not found:
+  - Ensure you're in python-implementation directory
+  - Run: pip install -e .
+
+psycopg2 not found:
+  - For PostgreSQL support:
+    x86/x64: pip install psycopg2-binary
+    RPi:     pip3 install psycopg2
+
+For more help:
+  - See README-PYTHON.md for complete documentation
+  - See RASPBERRY-PI-README-FIRST.txt for RPi-specific help
+
+================================================================================
+

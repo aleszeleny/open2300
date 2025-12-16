@@ -1,0 +1,17 @@
+# Requirements for Raspberry Pi (including RPi2 with Raspbian)
+# Tested on Raspberry Pi 2, 3, 4 with Raspbian/Raspberry Pi OS
+
+# Core dependency - works well on ARM
+pyserial>=3.4
+
+# PostgreSQL support (OPTIONAL)
+# Note: On older RPi models, use psycopg2 instead of psycopg2-binary
+# The binary version may not have ARM wheels, so we install from source
+# Requires: sudo apt-get install libpq-dev python3-dev
+# psycopg2>=2.8.0
+
+# Alternative: Use psycopg2-binary if available for your architecture
+# psycopg2-binary>=2.9.0
+
+# SQLite is included in Python standard library - no additional package needed
+

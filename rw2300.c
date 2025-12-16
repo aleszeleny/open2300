@@ -2447,6 +2447,12 @@ int get_configuration(struct config_type *config, char *path)
 		if (token[0] == '#')	// comment
 			continue;
 
+		if ( (strcmp(token,"LOG_LEVEL") == 0) && (strlen(val) != 0) )
+		{
+			config->log_level = atoi(val);
+			continue;
+		}
+
 		if ((strcmp(token,"SERIAL_DEVICE")==0) && (strlen(val) != 0))
 		{
 			strcpy(config->serial_device_name,val);
@@ -2600,6 +2606,40 @@ int get_configuration(struct config_type *config, char *path)
 	}
 
 	return (0);
+}
+
+
+ /********************************************************************
+ * logmsg writes formatted log message including timestamp.
+ *
+ * Input:   srcfile	name of source file
+ *          srcline	line of source file
+ *          msg		Text to be written to stdout.
+ *			use ATFL macro for srcfile, srcline
+ * 
+ * Output:  None
+ * 
+ * Returns: Nothing.
+ *
+ ********************************************************************/
+void logmsg (const int logconfig, const int loglevel, const char *srcfile, const int srcline, const char *msg)
+{
+	pid_t pid;
+	time_t basictime;
+	char datestring[50];
+
+	if ((pid = getpid()) < 0) {
+		perror("\nUnable to get pid!\n");
+	}
+
+	if (logconfig >= loglevel) {
+		time(&basictime);
+		strftime(datestring, sizeof(datestring),"%Y-%m-%d %H:%M:%S",
+       			localtime(&basictime));
+		printf("%s [%d]\t[%s:%d]\t%s\n", datestring, pid, srcfile, srcline, msg);
+	}
+
+	return;
 }
 
 
