@@ -28,7 +28,7 @@ setup(
     python_requires='>=3.6',
     
     install_requires=[
-        'pyserial>=3.5',
+        'pyserial>=3.4',  # Compatible with older systems including RPi2
     ],
     
     extras_require={
@@ -61,6 +61,7 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
         'Operating System :: POSIX :: Linux',
+        'Operating System :: POSIX',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
@@ -70,6 +71,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Home Automation',
+        'Environment :: Console',
     ],
     
     keywords='weather station ws2300 lacrosse',

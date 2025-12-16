@@ -1,8 +1,11 @@
-# Core dependencies
+# Requirements for x86/x64 systems (Linux, macOS, Windows)
+
+# Core dependency - required for serial communication
 pyserial>=3.5
 
-# Optional database support
-psycopg2-binary>=2.9.0  # PostgreSQL support (optional)
+# Optional: PostgreSQL support
+# For x86/x64 systems, the binary package works well
+psycopg2-binary>=2.9.0  # Optional, only if using PostgreSQL
 
+# Note: For Raspberry Pi and ARM systems, use requirements-rpi.txt instead
 # SQLite is included in Python standard library
-

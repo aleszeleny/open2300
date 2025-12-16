@@ -30,10 +30,12 @@ PyOpen2300 is a complete Python port of the original C-based open2300 project (v
 - Python 3.6 or higher
 - Serial port access (usually `/dev/ttyS0` or `/dev/ttyUSB0` on Linux)
 
+**For Raspberry Pi users:** See `INSTALL-RASPBERRY-PI.md` or `README-RASPBERRY-PI.txt` for RPi-specific instructions.
+
 ### Install from source
 
+**On x86/x64 systems (Linux, macOS, Windows):**
 ```bash
-# Clone or download the repository
 cd open2300
 
 # Install dependencies
@@ -42,6 +44,19 @@ pip install -r requirements.txt
 # Install the package
 pip install -e .
 ```
+
+**On Raspberry Pi (including RPi2):**
+```bash
+cd open2300
+
+# Install dependencies (use RPi-specific requirements)
+pip3 install -r requirements-rpi.txt
+
+# Install the package
+pip3 install -e .
+```
+
+See `INSTALL-RASPBERRY-PI.md` for detailed Raspberry Pi setup.
 
 ### Serial Port Access
 
