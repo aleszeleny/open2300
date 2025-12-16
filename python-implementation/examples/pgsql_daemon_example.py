@@ -15,7 +15,10 @@ Features:
 import sys
 import time
 from datetime import datetime
-sys.path.insert(0, '/home/zelenya/src/open2300')
+
+# Add parent directory to path if running from examples directory
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pyopen2300.weatherstation import WeatherStation
 from pyopen2300.config import Config

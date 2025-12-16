@@ -1,0 +1,89 @@
+================================================================================
+                      PYTHON IMPLEMENTATION
+================================================================================
+
+The Python implementation of open2300 is located in a separate directory:
+
+    python-implementation/
+
+DIRECTORY STRUCTURE
+-------------------
+
+open2300/                           Original C implementation
+├── rw2300.c, linux2300.c, etc.    C source files
+├── Makefile                        Build system for C
+├── open2300-dist.conf              Configuration (shared)
+├── README, INSTALL, etc.           C documentation
+│
+└── python-implementation/          ← Python implementation
+    ├── pyopen2300/                 Python package
+    │   ├── cli/                    Command-line tools
+    │   └── db/                     Database support
+    ├── examples/                   Example scripts
+    ├── setup.py                    Python package setup
+    ├── requirements*.txt           Python dependencies
+    └── README*.md                  Python documentation
+
+QUICK START
+-----------
+
+For Python implementation:
+
+    cd python-implementation
+    pip install -r requirements.txt      # or requirements-rpi.txt
+    pip install -e .
+    fetch2300
+
+For C implementation:
+
+    make
+    ./fetch2300
+
+CONFIGURATION
+-------------
+
+Both implementations can share the same configuration file:
+
+    open2300-dist.conf              Sample configuration (in root)
+    open2300.conf                   Your configuration (create this)
+
+The Python tools will find open2300.conf in:
+  - python-implementation/open2300.conf
+  - ../open2300.conf (parent directory)
+  - /usr/local/etc/open2300.conf
+  - /etc/open2300.conf
+
+DOCUMENTATION
+-------------
+
+C Implementation:
+  - README                          C version documentation
+  - INSTALL                         C version installation
+  - api.txt                         Protocol documentation
+
+Python Implementation:
+  - python-implementation/README.md                    Python overview
+  - python-implementation/README-PYTHON.md             Complete guide
+  - python-implementation/INSTALL-RASPBERRY-PI.md      RPi installation
+  - python-implementation/POSTGRESQL-PREPARED-STATEMENTS.md  Database guide
+
+WHY SEPARATE?
+-------------
+
+1. Clean separation of C and Python code
+2. Independent installation and dependencies
+3. Easy to maintain and update each separately
+4. Clear project structure
+5. Can use either or both implementations
+
+ADVANTAGES
+----------
+
+✓ Original C code remains untouched
+✓ Python code is self-contained
+✓ Both can share configuration file
+✓ Easy to package and distribute separately
+✓ Clear which implementation you're using
+
+================================================================================
+
