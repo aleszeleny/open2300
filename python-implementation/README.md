@@ -117,6 +117,23 @@ After installation, these commands are available:
 - pyserial (for serial communication)
 - psycopg2 (optional, for PostgreSQL)
 
+## Testing
+
+PyOpen2300 includes a comprehensive test suite:
+
+```bash
+# Install test dependencies
+pip install -r requirements-test.txt
+
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=pyopen2300 --cov-report=html
+```
+
+See [TESTING.md](TESTING.md) for complete testing documentation.
+
 ## Platform Support
 
 - ✅ Linux (x86/x64)
