@@ -1,0 +1,452 @@
+╔════════════════════════════════════════════════════════════════════╗
+║              fetch2300 - Example Output at Different Log Levels    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+This file shows what fetch2300 output looks like at different LOG_LEVEL
+settings. All LOG messages go to stderr, weather data goes to stdout.
+
+════════════════════════════════════════════════════════════════════
+EXAMPLE 1: LOG_LEVEL 0 (Off) - Data Only
+════════════════════════════════════════════════════════════════════
+
+Command: fetch2300
+
+Output (stdout):
+----------------
+Date 2025-Dec-31
+Time 19:30:45
+Ti 21.5
+To 5.3
+DP 2.1
+RHi 45
+RHo 78
+WS 3.2
+DIRtext NW
+RP 1013.250
+Tendency Steady
+Forecast Cloudy
+# Rain data functions not yet fully implemented
+
+(No stderr output - completely silent except for errors)
+
+
+════════════════════════════════════════════════════════════════════
+EXAMPLE 2: LOG_LEVEL 1 (Minimal) - Recommended for Normal Use
+════════════════════════════════════════════════════════════════════
+
+Command: fetch2300
+
+Output (stderr):
+----------------
+LOG: Loading configuration from: default locations
+======================================================================
+Configuration Summary:
+======================================================================
+Serial Device:        /dev/ttyS0
+Log Level:            1
+Timezone:             +1 hours from UTC
+Temperature Unit:     Celsius (°C)
+Wind Speed Unit:      m/s (meters per second)
+Rain Unit:            mm (millimeters)
+Pressure Unit:        hPa (hectopascals)
+======================================================================
+
+LOG: Opening weather station...
+LOG: Weather station opened successfully
+LOG: Closing weather station
+LOG: Weather station closed
+LOG: Data fetch completed successfully
+======================================================================
+Weather Data Output:
+======================================================================
+
+Output (stdout):
+----------------
+Date 2025-Dec-31
+Time 19:30:45
+Ti 21.5
+To 5.3
+DP 2.1
+RHi 45
+RHo 78
+WS 3.2
+DIRtext NW
+RP 1013.250
+Tendency Steady
+Forecast Cloudy
+# Rain data functions not yet fully implemented
+
+
+════════════════════════════════════════════════════════════════════
+EXAMPLE 3: LOG_LEVEL 2 (Medium) - Shows Data Values
+════════════════════════════════════════════════════════════════════
+
+Command: fetch2300
+
+Output (stderr):
+----------------
+LOG: Loading configuration from: default locations
+======================================================================
+Configuration Summary:
+======================================================================
+Serial Device:        /dev/ttyS0
+Log Level:            2
+Timezone:             +1 hours from UTC
+Temperature Unit:     Celsius (°C)
+Wind Speed Unit:      m/s (meters per second)
+Rain Unit:            mm (millimeters)
+Pressure Unit:        hPa (hectopascals)
+======================================================================
+
+LOG: Opening weather station...
+LOG: Using serial device: /dev/ttyS0
+LOG: Weather station opened successfully
+LOG: Reading current weather data...
+LOG: Indoor temperature: 21.5
+LOG: Outdoor temperature: 5.3
+LOG: Dewpoint: 2.1
+LOG: Indoor humidity: 45%
+LOG: Outdoor humidity: 78%
+LOG: Wind: 3.2 from NW
+LOG: Relative pressure: 1013.250
+LOG: Tendency: Steady, Forecast: Cloudy
+LOG: Closing weather station
+LOG: Weather station closed
+LOG: Data fetch completed successfully
+======================================================================
+Weather Data Output:
+======================================================================
+
+Output (stdout):
+----------------
+Date 2025-Dec-31
+Time 19:30:45
+Ti 21.5
+To 5.3
+DP 2.1
+RHi 45
+RHo 78
+WS 3.2
+DIRtext NW
+RP 1013.250
+Tendency Steady
+Forecast Cloudy
+# Rain data functions not yet fully implemented
+
+
+════════════════════════════════════════════════════════════════════
+EXAMPLE 4: LOG_LEVEL 3 (Maximum) - Very Verbose for Debugging
+════════════════════════════════════════════════════════════════════
+
+Command: fetch2300
+
+Output (stderr):
+----------------
+LOG: Loading configuration from: default locations
+======================================================================
+Configuration Summary:
+======================================================================
+Serial Device:        /dev/ttyS0
+Log Level:            3
+Timezone:             +1 hours from UTC
+Temperature Unit:     Celsius (°C)
+Wind Speed Unit:      m/s (meters per second)
+Rain Unit:            mm (millimeters)
+Pressure Unit:        hPa (hectopascals)
+======================================================================
+
+LOG: Opening weather station...
+LOG: Using serial device: /dev/ttyS0
+LOG: Weather station opened successfully
+LOG: Reading current weather data...
+LOG: Getting current date/time
+LOG: Reading indoor temperature
+LOG: Indoor temperature: 21.5
+LOG: Reading outdoor temperature
+LOG: Outdoor temperature: 5.3
+LOG: Reading dewpoint
+LOG: Dewpoint: 2.1
+LOG: Reading indoor humidity
+LOG: Indoor humidity: 45%
+LOG: Reading outdoor humidity
+LOG: Outdoor humidity: 78%
+LOG: Reading wind speed and direction
+LOG: Wind: 3.2 from NW
+LOG: Reading relative pressure
+LOG: Relative pressure: 1013.250
+LOG: Reading tendency and forecast
+LOG: Tendency: Steady, Forecast: Cloudy
+LOG: Reading rain data
+LOG: Closing weather station
+LOG: Weather station closed
+LOG: Data fetch completed successfully
+======================================================================
+Weather Data Output:
+======================================================================
+
+Output (stdout):
+----------------
+Date 2025-Dec-31
+Time 19:30:45
+Ti 21.5
+To 5.3
+DP 2.1
+RHi 45
+RHo 78
+WS 3.2
+DIRtext NW
+RP 1013.250
+Tendency Steady
+Forecast Cloudy
+# Rain data functions not yet fully implemented
+
+
+════════════════════════════════════════════════════════════════════
+EXAMPLE 5: With Custom Configuration File
+════════════════════════════════════════════════════════════════════
+
+Command: fetch2300 /home/user/weather.conf
+
+Output (stderr):
+----------------
+LOG: Loading configuration from: /home/user/weather.conf
+======================================================================
+Configuration Summary:
+======================================================================
+Serial Device:        /dev/ttyUSB0
+Log Level:            2
+Timezone:             -5 hours from UTC
+Temperature Unit:     Fahrenheit (°F)
+Wind Speed Unit:      MPH (miles per hour)
+Rain Unit:            inches
+Pressure Unit:        inHg (inches of mercury)
+======================================================================
+
+LOG: Opening weather station...
+LOG: Using serial device: /dev/ttyUSB0
+LOG: Weather station opened successfully
+LOG: Reading current weather data...
+LOG: Indoor temperature: 70.7
+LOG: Outdoor temperature: 41.5
+LOG: Dewpoint: 35.8
+LOG: Indoor humidity: 45%
+LOG: Outdoor humidity: 78%
+LOG: Wind: 7.2 from NW
+LOG: Relative pressure: 29.915
+LOG: Tendency: Steady, Forecast: Cloudy
+LOG: Closing weather station
+LOG: Weather station closed
+LOG: Data fetch completed successfully
+======================================================================
+Weather Data Output:
+======================================================================
+
+Output (stdout):
+----------------
+Date 2025-Dec-31
+Time 14:30:45
+Ti 70.7
+To 41.5
+DP 35.8
+RHi 45
+RHo 78
+WS 7.2
+DIRtext NW
+RP 29.915
+Tendency Steady
+Forecast Cloudy
+# Rain data functions not yet fully implemented
+
+
+════════════════════════════════════════════════════════════════════
+EXAMPLE 6: Error Handling (Device Not Found)
+════════════════════════════════════════════════════════════════════
+
+Command: fetch2300
+
+Output (stderr):
+----------------
+LOG: Loading configuration from: default locations
+======================================================================
+Configuration Summary:
+======================================================================
+Serial Device:        /dev/ttyS0
+Log Level:            1
+Timezone:             +1 hours from UTC
+Temperature Unit:     Celsius (°C)
+Wind Speed Unit:      m/s (meters per second)
+Rain Unit:            mm (millimeters)
+Pressure Unit:        hPa (hectopascals)
+======================================================================
+
+LOG: Opening weather station...
+ERROR: Cannot open serial device /dev/ttyS0: [Errno 2] No such file or directory: '/dev/ttyS0'
+
+Exit code: 1
+
+
+════════════════════════════════════════════════════════════════════
+EXAMPLE 7: Redirecting Output
+════════════════════════════════════════════════════════════════════
+
+Command: fetch2300 > weather.txt 2> fetch.log
+
+Result:
+-------
+weather.txt contains:
+    Date 2025-Dec-31
+    Time 19:30:45
+    Ti 21.5
+    ...
+
+fetch.log contains:
+    LOG: Loading configuration from: default locations
+    ======================================================================
+    Configuration Summary:
+    ...
+
+Terminal shows: (nothing - both streams redirected)
+
+
+Command: fetch2300 > weather.txt
+
+Result:
+-------
+weather.txt contains:
+    Date 2025-Dec-31
+    Time 19:30:45
+    Ti 21.5
+    ...
+
+Terminal shows:
+    LOG: Loading configuration from: default locations
+    ======================================================================
+    Configuration Summary:
+    ...
+    (all the stderr log messages)
+
+
+Command: fetch2300 2>/dev/null
+
+Result:
+-------
+Terminal shows:
+    Date 2025-Dec-31
+    Time 19:30:45
+    Ti 21.5
+    ...
+    (only stdout data, no logs)
+
+
+════════════════════════════════════════════════════════════════════
+EXAMPLE 8: Using in a Pipeline
+════════════════════════════════════════════════════════════════════
+
+Command: fetch2300 | grep "^To "
+
+Output (terminal shows stderr):
+----------------
+LOG: Loading configuration from: default locations
+======================================================================
+Configuration Summary:
+...
+LOG: Data fetch completed successfully
+======================================================================
+Weather Data Output:
+======================================================================
+To 5.3
+
+(Only the outdoor temperature line is shown from stdout, but all
+ log messages still appear on screen because they're on stderr)
+
+
+Command: fetch2300 2>/dev/null | grep "^To "
+
+Output (terminal):
+----------------
+To 5.3
+
+(Only the filtered data, no logs)
+
+
+════════════════════════════════════════════════════════════════════
+CONFIGURATION SUMMARY DETAILS
+════════════════════════════════════════════════════════════════════
+
+The configuration summary shows:
+
+Serial Device:
+  - Exact path to serial device
+  - Example: /dev/ttyS0, /dev/ttyUSB0, /dev/ttyAMA0 (Raspberry Pi)
+
+Log Level:
+  - 0 = No logging
+  - 1 = Minimal (major operations)
+  - 2 = Medium (includes data values)
+  - 3 = Maximum (every operation)
+
+Timezone:
+  - Hours offset from UTC
+  - Positive = East of UTC
+  - Negative = West of UTC
+  - Example: +1 (Central Europe), -5 (US Eastern), -8 (US Pacific)
+
+Temperature Unit:
+  - Celsius (°C) or Fahrenheit (°F)
+  - Affects Ti, To, DP values
+
+Wind Speed Unit:
+  - m/s (meters per second)
+  - km/h (kilometers per hour)
+  - MPH (miles per hour)
+  - Affects WS value
+
+Rain Unit:
+  - mm (millimeters)
+  - inches
+  - Affects rain measurements
+
+Pressure Unit:
+  - hPa (hectopascals) = mb (millibars)
+  - inHg (inches of mercury)
+  - Affects RP value
+
+
+════════════════════════════════════════════════════════════════════
+TIPS
+════════════════════════════════════════════════════════════════════
+
+1. Use LOG_LEVEL 1 for normal operation
+   - See what's happening without too much detail
+   - Verify configuration is correct
+
+2. Use LOG_LEVEL 2 when troubleshooting data issues
+   - See actual values as they're read
+   - Verify units are correct
+
+3. Use LOG_LEVEL 3 when debugging communication problems
+   - See every operation
+   - Identify where failures occur
+
+4. Use LOG_LEVEL 0 in automated scripts
+   - No log overhead
+   - Clean data output
+   - Or redirect: fetch2300 2>/dev/null
+
+5. Always check the configuration summary
+   - Ensures you're using the right serial device
+   - Verifies units are what you expect
+   - Shows timezone setting
+
+6. Separate logs from data
+   - fetch2300 > data.txt    (logs to screen, data to file)
+   - fetch2300 2> logs.txt   (data to screen, logs to file)
+   - Both can be useful for monitoring and archiving
+
+
+════════════════════════════════════════════════════════════════════
+
+For more information, see FETCH2300-LOGGING.md
+
+════════════════════════════════════════════════════════════════════
+
