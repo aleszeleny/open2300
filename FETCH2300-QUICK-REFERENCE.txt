@@ -1,0 +1,138 @@
+╔════════════════════════════════════════════════════════════════════╗
+║              fetch2300 - Quick Reference Card                      ║
+╚════════════════════════════════════════════════════════════════════╝
+
+LOG LEVELS
+----------
+0 = No logging (data only)
+1 = Minimal (config + major operations) ← RECOMMENDED
+2 = Medium (+ data values)
+3 = Maximum (+ every operation) ← DEBUGGING
+
+CONFIGURATION
+-------------
+Edit open2300.conf:
+  LOG_LEVEL 1
+
+USAGE
+-----
+fetch2300                    # Use default config
+fetch2300 myconfig.conf      # Use specific config
+
+OUTPUT STREAMS
+--------------
+stdout = Weather data
+stderr = Log messages
+
+REDIRECTING
+-----------
+fetch2300 > data.txt         # Logs to screen, data to file
+fetch2300 2> logs.txt        # Data to screen, logs to file
+fetch2300 > data.txt 2> logs.txt  # Both to files
+fetch2300 2>/dev/null        # Data only, suppress logs
+
+CONFIGURATION SUMMARY
+---------------------
+Shown when LOG_LEVEL ≥ 1:
+  • Serial Device
+  • Log Level
+  • Timezone
+  • Temperature Unit (C/F)
+  • Wind Speed Unit (m/s, km/h, MPH)
+  • Rain Unit (mm/inches)
+  • Pressure Unit (hPa/inHg)
+
+LOG OUTPUT AT EACH LEVEL
+-------------------------
+
+LOG_LEVEL 0:
+  (silent - data only)
+
+LOG_LEVEL 1:
+  LOG: Loading configuration...
+  [Configuration Summary]
+  LOG: Opening weather station...
+  LOG: Weather station opened successfully
+  LOG: Closing weather station
+  LOG: Weather station closed
+  LOG: Data fetch completed successfully
+
+LOG_LEVEL 2:
+  (All of LOG_LEVEL 1, plus:)
+  LOG: Using serial device: /dev/ttyS0
+  LOG: Reading current weather data...
+  LOG: Indoor temperature: 21.5
+  LOG: Outdoor temperature: 5.3
+  LOG: Dewpoint: 2.1
+  LOG: Indoor humidity: 45%
+  LOG: Outdoor humidity: 78%
+  LOG: Wind: 3.2 from NW
+  LOG: Relative pressure: 1013.250
+  LOG: Tendency: Steady, Forecast: Cloudy
+
+LOG_LEVEL 3:
+  (All of LOG_LEVEL 2, plus:)
+  LOG: Getting current date/time
+  LOG: Reading indoor temperature
+  LOG: Reading outdoor temperature
+  LOG: Reading dewpoint
+  LOG: Reading indoor humidity
+  LOG: Reading outdoor humidity
+  LOG: Reading wind speed and direction
+  LOG: Reading relative pressure
+  LOG: Reading tendency and forecast
+  LOG: Reading rain data
+
+EXAMPLES
+--------
+
+Normal use:
+  LOG_LEVEL 1
+  fetch2300
+
+See data values:
+  LOG_LEVEL 2
+  fetch2300
+
+Debug communication:
+  LOG_LEVEL 3
+  fetch2300
+
+Automated script:
+  LOG_LEVEL 0
+  fetch2300 > /var/log/weather.txt
+
+Monitor with logs:
+  LOG_LEVEL 1
+  fetch2300 > /var/log/weather.txt 2> /var/log/fetch.log
+
+Pipe to parser:
+  fetch2300 2>/dev/null | parse_weather.py
+
+TROUBLESHOOTING
+---------------
+
+No config summary shown?
+  → Check LOG_LEVEL is ≥ 1
+
+Too much output?
+  → Reduce LOG_LEVEL to 1 or 0
+
+Want to see values?
+  → Set LOG_LEVEL to 2
+
+Serial port issues?
+  → Set LOG_LEVEL to 3 for detailed debug
+
+Wrong units shown?
+  → Check Configuration Summary display
+  → Verify open2300.conf settings
+
+DOCUMENTATION
+-------------
+FETCH2300-LOGGING.md          - Complete guide
+FETCH2300-EXAMPLE-OUTPUT.txt  - Visual examples
+open2300.conf                 - Configuration file
+
+═══════════════════════════════════════════════════════════════════
+
