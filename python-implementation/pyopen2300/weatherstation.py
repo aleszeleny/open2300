@@ -604,22 +604,22 @@ class WeatherStation:
         
         return tendency, forecast
     
-    def ws_time(self) -> Timestamp:
+    def ws_time_local(self) -> Timestamp:
         """
-        Read weather station's internal clock/date/time (LOCAL time)
+        Read weather station's local time (DCF77-synchronized)
         
         Returns:
-            Timestamp object with weather station's current time
+            Timestamp object with weather station's current local time
         """
         # Read local time (second, minute, hour) from 0x239
         time_data = self.read_safe(0x239, 3)
         if time_data is None:
-            raise IOError("Failed to read weather station time")
+            raise IOError("Failed to read weather station local time")
         
         # Read local date (day, month, year) from 0x240
         date_data = self.read_safe(0x240, 3)
         if date_data is None:
-            raise IOError("Failed to read weather station date")
+            raise IOError("Failed to read weather station local date")
         
         # Decode BCD time/date from weather station
         timestamp = Timestamp()
@@ -631,6 +631,47 @@ class WeatherStation:
         timestamp.year = 2000 + ((date_data[2] >> 4) * 10) + (date_data[2] & 0xF)
         
         return timestamp
+    
+    def ws_time_utc(self, timezone_offset: float) -> Timestamp:
+        """
+        Calculate UTC time from local time using timezone offset
+        
+        NOTE: The weather station's UTC memory (0x200/0x207) is often
+              misconfigured or not properly maintained. This method
+              calculates UTC from the DCF77-synchronized local time
+              using the timezone offset from the config file.
+        
+        Args:
+            timezone_offset: Hours relative to UTC (e.g., 1.0 for UTC+1,
+                           positive for east, negative for west)
+        
+        Returns:
+            Timestamp object with calculated UTC time
+        """
+        from datetime import datetime, timedelta
+        
+        # First read local time (DCF77-synchronized, reliable)
+        local_time = self.ws_time_local()
+        
+        # Convert to datetime for easier calculation
+        try:
+            local_dt = datetime(local_time.year, local_time.month, local_time.day,
+                              local_time.hour, local_time.minute)
+        except ValueError:
+            raise IOError(f"Invalid local time from station: {local_time.year}-{local_time.month}-{local_time.day} {local_time.hour}:{local_time.minute}")
+        
+        # Calculate UTC by subtracting timezone offset
+        utc_dt = local_dt - timedelta(hours=timezone_offset)
+        
+        # Create UTC timestamp
+        utc_timestamp = Timestamp()
+        utc_timestamp.year = utc_dt.year
+        utc_timestamp.month = utc_dt.month
+        utc_timestamp.day = utc_dt.day
+        utc_timestamp.hour = utc_dt.hour
+        utc_timestamp.minute = utc_dt.minute
+        
+        return utc_timestamp
     
     def temperature_indoor_minmax(self, temperature_conv: int = CELSIUS) -> Tuple[float, float, Timestamp, Timestamp]:
         """

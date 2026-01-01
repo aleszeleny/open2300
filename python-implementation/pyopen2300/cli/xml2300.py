@@ -114,14 +114,25 @@ def main():
             except:
                 pass
             
-            # Weather station date/time
+            # Weather station local date/time
             try:
-                ws_timestamp = ws.ws_time()
-                station_time = SubElement(root, 'station_datetime')
-                date_elem = SubElement(station_time, 'date')
-                date_elem.text = f"{ws_timestamp.year:04d}-{ws_timestamp.month:02d}-{ws_timestamp.day:02d}"
-                time_elem = SubElement(station_time, 'time')
-                time_elem.text = f"{ws_timestamp.hour:02d}:{ws_timestamp.minute:02d}"
+                ws_local = ws.ws_time_local()
+                station_local = SubElement(root, 'station_datetime_local')
+                date_elem = SubElement(station_local, 'date')
+                date_elem.text = f"{ws_local.year:04d}-{ws_local.month:02d}-{ws_local.day:02d}"
+                time_elem = SubElement(station_local, 'time')
+                time_elem.text = f"{ws_local.hour:02d}:{ws_local.minute:02d}"
+            except:
+                pass
+            
+            # Weather station UTC date/time (calculated from local + timezone)
+            try:
+                ws_utc = ws.ws_time_utc(config.timezone)
+                station_utc = SubElement(root, 'station_datetime_utc')
+                date_elem = SubElement(station_utc, 'date')
+                date_elem.text = f"{ws_utc.year:04d}-{ws_utc.month:02d}-{ws_utc.day:02d}"
+                time_elem = SubElement(station_utc, 'time')
+                time_elem.text = f"{ws_utc.hour:02d}:{ws_utc.minute:02d}"
             except:
                 pass
             

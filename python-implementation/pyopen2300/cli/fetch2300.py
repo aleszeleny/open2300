@@ -306,16 +306,27 @@ def main():
                 log(config, LOG_MIN, f"ERROR reading tendency/forecast: {e}")
                 print(f"Warning: Could not read tendency/forecast: {e}", file=sys.stderr)
             
-            # Weather station date/time
-            log(config, LOG_MAX, "Reading weather station date/time")
+            # Weather station local date/time
+            log(config, LOG_MAX, "Reading weather station local date/time")
             try:
-                ws_timestamp = ws.ws_time()
-                output.append(f"WSDate {ws_timestamp.year:04d}-{ws_timestamp.month:02d}-{ws_timestamp.day:02d}")
-                output.append(f"WSTime {ws_timestamp.hour:02d}:{ws_timestamp.minute:02d}")
-                log(config, LOG_MED, f"Station time: {ws_timestamp.year:04d}-{ws_timestamp.month:02d}-{ws_timestamp.day:02d} {ws_timestamp.hour:02d}:{ws_timestamp.minute:02d}")
+                ws_local = ws.ws_time_local()
+                output.append(f"WSDateLocal {ws_local.year:04d}-{ws_local.month:02d}-{ws_local.day:02d}")
+                output.append(f"WSTimeLocal {ws_local.hour:02d}:{ws_local.minute:02d}")
+                log(config, LOG_MED, f"Station local time: {ws_local.year:04d}-{ws_local.month:02d}-{ws_local.day:02d} {ws_local.hour:02d}:{ws_local.minute:02d}")
             except Exception as e:
-                log(config, LOG_MIN, f"ERROR reading station time: {e}")
-                print(f"Warning: Could not read station time: {e}", file=sys.stderr)
+                log(config, LOG_MIN, f"ERROR reading station local time: {e}")
+                print(f"Warning: Could not read station local time: {e}", file=sys.stderr)
+            
+            # Weather station UTC date/time (calculated from local + timezone)
+            log(config, LOG_MAX, "Calculating UTC time from local time and timezone offset")
+            try:
+                ws_utc = ws.ws_time_utc(config.timezone)
+                output.append(f"WSDateUTC {ws_utc.year:04d}-{ws_utc.month:02d}-{ws_utc.day:02d}")
+                output.append(f"WSTimeUTC {ws_utc.hour:02d}:{ws_utc.minute:02d}")
+                log(config, LOG_MED, f"Calculated UTC time: {ws_utc.year:04d}-{ws_utc.month:02d}-{ws_utc.day:02d} {ws_utc.hour:02d}:{ws_utc.minute:02d}")
+            except Exception as e:
+                log(config, LOG_MIN, f"ERROR calculating UTC time: {e}")
+                print(f"Warning: Could not calculate UTC time: {e}", file=sys.stderr)
             
             log(config, LOG_MIN, "Closing weather station")
             
