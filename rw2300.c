@@ -3109,43 +3109,92 @@ void ws_time_local(WEATHERSTATION ws2300, struct timestamp *timestamp)
 
 /********************************************************************
  * ws_time_utc
- * Read weather station's UTC time
+ * Calculate UTC time from local time using timezone offset
+ * 
+ * NOTE: The weather station's UTC memory (0x200/0x207) is often
+ *       misconfigured or not properly maintained. This function
+ *       calculates UTC from the DCF77-synchronized local time
+ *       using the timezone offset from the config file.
  * 
  * Input:  Handle to weatherstation
+ *         timezone_offset - hours relative to UTC (e.g., 1.0 for UTC+1)
  *         
  * Output: timestamp - pointer to timestamp structure to store result
  * 
  * Returns: Nothing (fills timestamp structure)
  *
  ********************************************************************/
-void ws_time_utc(WEATHERSTATION ws2300, struct timestamp *timestamp)
+void ws_time_utc(WEATHERSTATION ws2300, double timezone_offset, struct timestamp *timestamp)
 {
-	unsigned char data[20];
-	unsigned char command[25];
-	int address;
-	int bytes;
+	struct timestamp local_time;
+	int utc_hour;
+	int utc_day;
+	int utc_month;
+	int utc_year;
+	int days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	
-	// Read UTC time (second, minute, hour) from 0x200
-	address = 0x200;
-	bytes = 3;
+	// First read local time (DCF77-synchronized, reliable)
+	ws_time_local(ws2300, &local_time);
 	
-	if (read_safe(ws2300, address, bytes, data, command) != bytes)
-		read_error_exit();
+	// Calculate UTC by subtracting timezone offset from local time
+	// timezone_offset is positive for east of UTC, negative for west
+	utc_hour = local_time.hour - (int)timezone_offset;
+	utc_day = local_time.day;
+	utc_month = local_time.month;
+	utc_year = local_time.year;
 	
-	// Note: timestamp struct doesn't have 'second' field, so we skip data[0]
-	timestamp->minute = ((data[1] >> 4) * 10) + (data[1] & 0xF);
-	timestamp->hour = ((data[2] >> 4) * 10) + (data[2] & 0xF);
+	// Handle hour overflow/underflow
+	if (utc_hour < 0) {
+		utc_hour += 24;
+		utc_day--;
+		
+		// Handle day underflow
+		if (utc_day < 1) {
+			utc_month--;
+			
+			// Handle month underflow
+			if (utc_month < 1) {
+				utc_month = 12;
+				utc_year--;
+			}
+			
+			// Set day to last day of previous month
+			// Check for leap year if February
+			if (utc_month == 2 && (utc_year % 4 == 0 && (utc_year % 100 != 0 || utc_year % 400 == 0))) {
+				utc_day = 29;
+			} else {
+				utc_day = days_in_month[utc_month - 1];
+			}
+		}
+	} else if (utc_hour >= 24) {
+		utc_hour -= 24;
+		utc_day++;
+		
+		// Check for day overflow
+		int max_days = days_in_month[utc_month - 1];
+		// Check for leap year if February
+		if (utc_month == 2 && (utc_year % 4 == 0 && (utc_year % 100 != 0 || utc_year % 400 == 0))) {
+			max_days = 29;
+		}
+		
+		if (utc_day > max_days) {
+			utc_day = 1;
+			utc_month++;
+			
+			// Handle month overflow
+			if (utc_month > 12) {
+				utc_month = 1;
+				utc_year++;
+			}
+		}
+	}
 	
-	// Read UTC date (day, month, year) from 0x207
-	address = 0x207;
-	bytes = 3;
-	
-	if (read_safe(ws2300, address, bytes, data, command) != bytes)
-		read_error_exit();
-	
-	timestamp->day = ((data[0] >> 4) * 10) + (data[0] & 0xF);
-	timestamp->month = ((data[1] >> 4) * 10) + (data[1] & 0xF);
-	timestamp->year = 2000 + ((data[2] >> 4) * 10) + (data[2] & 0xF);
+	// Store result
+	timestamp->minute = local_time.minute;
+	timestamp->hour = utc_hour;
+	timestamp->day = utc_day;
+	timestamp->month = utc_month;
+	timestamp->year = utc_year;
 	
 	return;
 }

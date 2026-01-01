@@ -51,7 +51,8 @@ class PostgreSQLLogger:
         except Exception as e:
             raise IOError(f"Failed to connect to PostgreSQL: {e}")
     
-    def log_data(self, temperature_indoor, temperature_outdoor, dewpoint,
+    def log_data(self, ws_datetime_local, ws_datetime_utc,
+                 temperature_indoor, temperature_outdoor, dewpoint,
                  humidity_indoor, humidity_outdoor, wind_speed,
                  wind_angle, wind_direction, wind_chill,
                  rain_1h, rain_24h, rain_total,
@@ -60,6 +61,8 @@ class PostgreSQLLogger:
         Log weather data to database
         
         Args match the C implementation exactly:
+            ws_datetime_local: Weather station local time (Timestamp)
+            ws_datetime_utc: Weather station UTC time (Timestamp)
             temperature_indoor: Indoor temperature
             temperature_outdoor: Outdoor temperature
             dewpoint: Dewpoint temperature
@@ -83,7 +86,9 @@ class PostgreSQLLogger:
             # Build INSERT query matching C version structure
             insert_query = sql.SQL("""
                 INSERT INTO {} (
-                      temperature_indoor
+                      ws_datetime_local
+                    , ws_datetime_utc
+                    , temperature_indoor
                     , temperature_outdoor
                     , dewpoint
                     , humidity_indoor
@@ -99,12 +104,20 @@ class PostgreSQLLogger:
                     , tendency
                     , forecast
                 ) VALUES (
-                      %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                      to_timestamp(%s, 'YYYY-MM-DD HH24:MI')
+                    , to_timestamp(%s, 'YYYY-MM-DD HH24:MI')
+                    , %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
             """).format(sql.Identifier(self.table_name))
             
+            # Format timestamps
+            local_str = f"{ws_datetime_local.year:04d}-{ws_datetime_local.month:02d}-{ws_datetime_local.day:02d} {ws_datetime_local.hour:02d}:{ws_datetime_local.minute:02d}"
+            utc_str = f"{ws_datetime_utc.year:04d}-{ws_datetime_utc.month:02d}-{ws_datetime_utc.day:02d} {ws_datetime_utc.hour:02d}:{ws_datetime_utc.minute:02d}"
+            
             # Execute with parameters
             self.cursor.execute(insert_query, (
+                local_str,
+                utc_str,
                 temperature_indoor,
                 temperature_outdoor,
                 dewpoint,
@@ -235,11 +248,21 @@ def main():
             print("LOG: READ TENDENCY AND FORECAST", file=sys.stderr)
             tendency, forecast = ws.tendency_forecast()
             
+            # READ LOCAL DATE AND TIME FROM WEATHER STATION
+            print("LOG: READ LOCAL DATE AND TIME FROM WEATHER STATION", file=sys.stderr)
+            ws_datetime_local = ws.ws_time_local()
+            
+            # CALCULATE UTC DATE AND TIME FROM LOCAL TIME AND TIMEZONE OFFSET
+            print("LOG: CALCULATE UTC FROM LOCAL TIME AND TIMEZONE OFFSET", file=sys.stderr)
+            ws_datetime_utc = ws.ws_time_utc(config.timezone)
+            
             print("LOG: Closing weather station", file=sys.stderr)
         
         # Build SQL query as C version does (for display/debug)
         sql_query = f"""INSERT INTO {config.pgsql_table} (
-     temperature_indoor
+     ws_datetime_local
+   , ws_datetime_utc
+   , temperature_indoor
    , temperature_outdoor
    , dewpoint
    , humidity_indoor
@@ -255,7 +278,9 @@ def main():
    , tendency
    , forecast
 ) VALUES (
-     {temperature_indoor:.1f}
+     to_timestamp('{ws_datetime_local.year:04d}-{ws_datetime_local.month:02d}-{ws_datetime_local.day:02d} {ws_datetime_local.hour:02d}:{ws_datetime_local.minute:02d}','YYYY-MM-DD HH24:MI')
+   , to_timestamp('{ws_datetime_utc.year:04d}-{ws_datetime_utc.month:02d}-{ws_datetime_utc.day:02d} {ws_datetime_utc.hour:02d}:{ws_datetime_utc.minute:02d}','YYYY-MM-DD HH24:MI')
+   , {temperature_indoor:.1f}
    , {temperature_outdoor:.1f}
    , {dewpoint:.1f}
    , {humidity_indoor}
@@ -283,6 +308,8 @@ def main():
                              getattr(config, 'pgsql_station', None)) as db:
             
             db.log_data(
+                ws_datetime_local=ws_datetime_local,
+                ws_datetime_utc=ws_datetime_utc,
                 temperature_indoor=temperature_indoor,
                 temperature_outdoor=temperature_outdoor,
                 dewpoint=dewpoint,

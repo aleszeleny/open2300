@@ -360,16 +360,28 @@ int main(int argc, char *argv[])
 			"\t<Forecast>%s</Forecast>\n", tendency, forecast);
 
 
-	/* <StationDateTime> - Weather Station Internal Clock */
+	/* <StationDateTimeLocal> - Weather Station Local Time (DCF77) */
 	
-	ws_time(ws2300, &time_min);
+	ws_time_local(ws2300, &time_min);
 	
-	fprintf(fileptr, "\t<StationDateTime>\n"
+	fprintf(fileptr, "\t<StationDateTimeLocal>\n"
 			"\t\t<Date>%04d-%02d-%02d</Date>\n"
 			"\t\t<Time>%02d:%02d</Time>\n"
-			"\t</StationDateTime>\n",
+			"\t</StationDateTimeLocal>\n",
 			time_min.year, time_min.month, time_min.day,
 			time_min.hour, time_min.minute);
+
+
+	/* <StationDateTimeUTC> - Weather Station UTC Time (calculated from local + timezone) */
+	
+	ws_time_utc(ws2300, atof(config.timezone), &time_max);
+	
+	fprintf(fileptr, "\t<StationDateTimeUTC>\n"
+			"\t\t<Date>%04d-%02d-%02d</Date>\n"
+			"\t\t<Time>%02d:%02d</Time>\n"
+			"\t</StationDateTimeUTC>\n",
+			time_max.year, time_max.month, time_max.day,
+			time_max.hour, time_max.minute);
 
 
 	fprintf(fileptr, "</ws2300>\n");

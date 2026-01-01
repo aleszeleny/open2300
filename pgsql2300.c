@@ -173,9 +173,12 @@ int main(int argc, char *argv[])
 //	strcat(logvalues, tempstring);
 
 
-	/* READ UTC DATE AND TIME FROM WEATHER STATION */
-	LOG(LOG_MAX, "READ UTC DATE AND TIME FROM WEATHER STATION.");
-	ws_time(ws2300, &ws_data.ws_datetime);
+	/* READ LOCAL AND UTC DATE/TIME FROM WEATHER STATION */
+	LOG(LOG_MAX, "READ LOCAL DATE AND TIME FROM WEATHER STATION.");
+	ws_time_local(ws2300, &ws_data.ws_datetime_local);
+	
+	LOG(LOG_MAX, "CALCULATE UTC DATE AND TIME FROM LOCAL TIME AND TIMEZONE OFFSET.");
+	ws_time_utc(ws2300, atof(config.timezone), &ws_data.ws_datetime_utc);
 
 
 // add the speed reset see open2300_zalohy/zafod/open2300/pgsql2300.c
@@ -242,7 +245,8 @@ int main(int argc, char *argv[])
 
   sql_query = fmt_alloc(
         "INSERT INTO %s (\n"
-        "     ws_datetime\n"
+        "     ws_datetime_local\n"
+        "   , ws_datetime_utc\n"
         "   , temperature_indoor\n"
         "   , temperature_outdoor\n"
         "   , dewpoint\n"
@@ -260,6 +264,7 @@ int main(int argc, char *argv[])
         "   , forecast\n"
         ") VALUES (\n"
         "     to_timestamp('%04d-%02d-%02d %02d:%02d','YYYY-MM-DD HH24:MI')\n"
+        "   , to_timestamp('%04d-%02d-%02d %02d:%02d','YYYY-MM-DD HH24:MI')\n"
         "   , %.1f\n"
         "   , %.1f\n"
         "   , %.1f\n"
@@ -277,8 +282,10 @@ int main(int argc, char *argv[])
         "   , '%s'\n"
         ")\n",
       config.pgsql_table,
-      ws_data.ws_datetime.year, ws_data.ws_datetime.month, ws_data.ws_datetime.day,
-      ws_data.ws_datetime.hour, ws_data.ws_datetime.minute,
+      ws_data.ws_datetime_local.year, ws_data.ws_datetime_local.month, ws_data.ws_datetime_local.day,
+      ws_data.ws_datetime_local.hour, ws_data.ws_datetime_local.minute,
+      ws_data.ws_datetime_utc.year, ws_data.ws_datetime_utc.month, ws_data.ws_datetime_utc.day,
+      ws_data.ws_datetime_utc.hour, ws_data.ws_datetime_utc.minute,
       ws_data.temperature_indoor, ws_data.temperature_outdoor, ws_data.dewpoint,
       ws_data.humidity_indoor, ws_data.humidity_outdoor, ws_data.wind_speed,
       ws_data.wind_angle[0], ws_data.wind_direction, ws_data.wind_chill,

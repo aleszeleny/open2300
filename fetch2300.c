@@ -259,13 +259,24 @@ int main(int argc, char *argv[])
 	strcat(logline, tempstring);
 
 
-	/* READ WEATHER STATION DATE AND TIME */
+	/* READ WEATHER STATION LOCAL DATE AND TIME */
 
-	if (DEBUG) printf("DEBUG:%s:%d\tws_time()\n", __FILE__, __LINE__);
-	ws_time(ws2300, &time_min);
-	sprintf(tempstring, "WSDate %04d-%02d-%02d\nWSTime %02d:%02d\n",
+	if (DEBUG) printf("DEBUG:%s:%d\tws_time_local()\n", __FILE__, __LINE__);
+	ws_time_local(ws2300, &time_min);
+	sprintf(tempstring, "WSDateLocal %04d-%02d-%02d\nWSTimeLocal %02d:%02d\n",
 	        time_min.year, time_min.month, time_min.day,
 	        time_min.hour, time_min.minute);
+	strcat(logline, tempstring);
+
+
+	/* READ WEATHER STATION UTC DATE AND TIME */
+	/* UTC is calculated from local time using timezone offset from config */
+
+	if (DEBUG) printf("DEBUG:%s:%d\tws_time_utc()\n", __FILE__, __LINE__);
+	ws_time_utc(ws2300, atof(config.timezone), &time_max);
+	sprintf(tempstring, "WSDateUTC %04d-%02d-%02d\nWSTimeUTC %02d:%02d\n",
+	        time_max.year, time_max.month, time_max.day,
+	        time_max.hour, time_max.minute);
 	strcat(logline, tempstring);
 
 

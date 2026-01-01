@@ -126,7 +126,8 @@ struct weather_dataset
 	double rel_pressure;
 	char   tendency[15];
 	char   forecast[15];
-	struct timestamp ws_datetime;  // Weather station's internal clock
+	struct timestamp ws_datetime_local;  // Weather station's local time (DCF77)
+	struct timestamp ws_datetime_utc;    // Weather station's UTC time
 };
 
 
@@ -268,7 +269,9 @@ double pressure_correction(WEATHERSTATION ws2300, double pressure_conv_factor);
 
 void tendency_forecast(WEATHERSTATION ws2300, char *tendency, char *forecast);
 
-void ws_time(WEATHERSTATION ws2300, struct timestamp *timestamp);
+void ws_time_local(WEATHERSTATION ws2300, struct timestamp *timestamp);
+
+void ws_time_utc(WEATHERSTATION ws2300, double timezone_offset, struct timestamp *timestamp);
 
 int read_history_info(WEATHERSTATION ws2300, int *interval, int *countdown,
                       struct timestamp *time_last, int *no_records);
