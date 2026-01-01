@@ -141,18 +141,33 @@ Weather station closed.
 
 ## Memory Address Details
 
-The weather station stores its current date/time at address `0x23B`:
+The weather station stores its current date/time in **TWO separate locations**:
 
+**Local Time (DCF77-synchronized):**
+- Address `0x239`: second, minute, hour (3 bytes, BCD)
+- Address `0x240`: day, month, year (3 bytes, BCD)
+
+**UTC Time:**
+- Address `0x200`: second, minute, hour (3 bytes, BCD)
+- Address `0x207`: day, month, year (3 bytes, BCD)
+
+**Note:** The `ws_time()` function reads **Local Time** from addresses 0x239 and 0x240.
+
+### Local Time Format (0x239 + 0x240):
+
+**Time Block (0x239, 3 bytes):**
 | Byte | Content | Format |
 |------|---------|--------|
-| 0    | Minute  | BCD (00-59) |
-| 1    | Hour    | BCD (00-23) |
-| 2    | Day     | BCD (01-31) |
-| 3    | Month   | BCD (01-12) |
-| 4    | Year    | BCD (00-99, represents 2000-2099) |
-| 5    | Second  | BCD (00-59, lower nibble only) |
+| 0    | Second  | BCD (00-59) |
+| 1    | Minute  | BCD (00-59) |
+| 2    | Hour    | BCD (00-23) |
 
-This same address is referenced throughout the codebase when setting min/max timestamps for various measurements.
+**Date Block (0x240, 3 bytes):**
+| Byte | Content | Format |
+|------|---------|--------|
+| 0    | Day     | BCD (01-31) |
+| 1    | Month   | BCD (01-12) |
+| 2    | Year    | BCD (00-99, represents 2000-2099) |
 
 ## Files Modified
 

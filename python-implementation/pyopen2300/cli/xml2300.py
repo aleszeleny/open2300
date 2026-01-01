@@ -114,6 +114,17 @@ def main():
             except:
                 pass
             
+            # Weather station date/time
+            try:
+                ws_timestamp = ws.ws_time()
+                station_time = SubElement(root, 'station_datetime')
+                date_elem = SubElement(station_time, 'date')
+                date_elem.text = f"{ws_timestamp.year:04d}-{ws_timestamp.month:02d}-{ws_timestamp.day:02d}"
+                time_elem = SubElement(station_time, 'time')
+                time_elem.text = f"{ws_timestamp.hour:02d}:{ws_timestamp.minute:02d}"
+            except:
+                pass
+            
             # Write to file
             xml_string = prettify_xml(root)
             with open(xmlfile, 'w') as f:

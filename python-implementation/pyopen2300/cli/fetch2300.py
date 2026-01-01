@@ -306,6 +306,17 @@ def main():
                 log(config, LOG_MIN, f"ERROR reading tendency/forecast: {e}")
                 print(f"Warning: Could not read tendency/forecast: {e}", file=sys.stderr)
             
+            # Weather station date/time
+            log(config, LOG_MAX, "Reading weather station date/time")
+            try:
+                ws_timestamp = ws.ws_time()
+                output.append(f"WSDate {ws_timestamp.year:04d}-{ws_timestamp.month:02d}-{ws_timestamp.day:02d}")
+                output.append(f"WSTime {ws_timestamp.hour:02d}:{ws_timestamp.minute:02d}")
+                log(config, LOG_MED, f"Station time: {ws_timestamp.year:04d}-{ws_timestamp.month:02d}-{ws_timestamp.day:02d} {ws_timestamp.hour:02d}:{ws_timestamp.minute:02d}")
+            except Exception as e:
+                log(config, LOG_MIN, f"ERROR reading station time: {e}")
+                print(f"Warning: Could not read station time: {e}", file=sys.stderr)
+            
             log(config, LOG_MIN, "Closing weather station")
             
         log(config, LOG_MIN, "Weather station closed")

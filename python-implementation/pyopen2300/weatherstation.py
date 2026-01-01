@@ -606,29 +606,29 @@ class WeatherStation:
     
     def ws_time(self) -> Timestamp:
         """
-        Read weather station's internal clock/date/time
+        Read weather station's internal clock/date/time (LOCAL time)
         
         Returns:
             Timestamp object with weather station's current time
         """
-        data = self.read_safe(0x23B, 6)
-        if data is None:
+        # Read local time (second, minute, hour) from 0x239
+        time_data = self.read_safe(0x239, 3)
+        if time_data is None:
             raise IOError("Failed to read weather station time")
         
-        # Decode BCD time/date from weather station
-        # data[0]: minute (BCD)
-        # data[1]: hour (BCD)
-        # data[2]: day (upper nibble only)
-        # data[3]: month (BCD)
-        # data[4]: year (BCD)
-        # data[5]: second (lower nibble only) - not stored in timestamp struct
+        # Read local date (day, month, year) from 0x240
+        date_data = self.read_safe(0x240, 3)
+        if date_data is None:
+            raise IOError("Failed to read weather station date")
         
+        # Decode BCD time/date from weather station
         timestamp = Timestamp()
-        timestamp.minute = ((data[0] >> 4) * 10) + (data[0] & 0xF)
-        timestamp.hour = ((data[1] >> 4) * 10) + (data[1] & 0xF)
-        timestamp.day = ((data[2] >> 4) * 10) + (data[2] & 0xF)
-        timestamp.month = ((data[3] >> 4) * 10) + (data[3] & 0xF)
-        timestamp.year = 2000 + ((data[4] >> 4) * 10) + (data[4] & 0xF)
+        # time_data[0] is seconds (not stored in Timestamp struct)
+        timestamp.minute = ((time_data[1] >> 4) * 10) + (time_data[1] & 0xF)
+        timestamp.hour = ((time_data[2] >> 4) * 10) + (time_data[2] & 0xF)
+        timestamp.day = ((date_data[0] >> 4) * 10) + (date_data[0] & 0xF)
+        timestamp.month = ((date_data[1] >> 4) * 10) + (date_data[1] & 0xF)
+        timestamp.year = 2000 + ((date_data[2] >> 4) * 10) + (date_data[2] & 0xF)
         
         return timestamp
     
