@@ -3064,8 +3064,8 @@ int write_safe(WEATHERSTATION ws2300, int address, int number,
 
 
 /********************************************************************
- * ws_time
- * Read weather station's internal clock/date/time
+ * ws_time_local
+ * Read weather station's local time (DCF77-synchronized)
  * 
  * Input:  Handle to weatherstation
  *         
@@ -3074,29 +3074,78 @@ int write_safe(WEATHERSTATION ws2300, int address, int number,
  * Returns: Nothing (fills timestamp structure)
  *
  ********************************************************************/
-void ws_time(WEATHERSTATION ws2300, struct timestamp *timestamp)
+void ws_time_local(WEATHERSTATION ws2300, struct timestamp *timestamp)
 {
 	unsigned char data[20];
 	unsigned char command[25];
-	int address = 0x23B;  // Weather station clock address
-	int bytes = 6;
+	int address;
+	int bytes;
+	
+	// Read local time (second, minute, hour) from 0x239
+	address = 0x239;
+	bytes = 3;
 	
 	if (read_safe(ws2300, address, bytes, data, command) != bytes)
 		read_error_exit();
 	
-	// Decode BCD time/date from weather station
-	// data[0]: minute (BCD)
-	// data[1]: hour (BCD)
-	// data[2]: day (upper nibble only)
-	// data[3]: month (BCD)
-	// data[4]: year (BCD)
-	// data[5]: second (lower nibble only) - not stored in timestamp struct
+	// Note: timestamp struct doesn't have 'second' field, so we skip data[0]
+	timestamp->minute = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	timestamp->hour = ((data[2] >> 4) * 10) + (data[2] & 0xF);
 	
-	timestamp->minute = ((data[0] >> 4) * 10) + (data[0] & 0xF);
-	timestamp->hour = ((data[1] >> 4) * 10) + (data[1] & 0xF);
-	timestamp->day = ((data[2] >> 4) * 10) + (data[2] & 0xF);
-	timestamp->month = ((data[3] >> 4) * 10) + (data[3] & 0xF);
-	timestamp->year = 2000 + ((data[4] >> 4) * 10) + (data[4] & 0xF);
+	// Read local date (day, month, year) from 0x240
+	address = 0x240;
+	bytes = 3;
+	
+	if (read_safe(ws2300, address, bytes, data, command) != bytes)
+		read_error_exit();
+	
+	timestamp->day = ((data[0] >> 4) * 10) + (data[0] & 0xF);
+	timestamp->month = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	timestamp->year = 2000 + ((data[2] >> 4) * 10) + (data[2] & 0xF);
+	
+	return;
+}
+
+
+/********************************************************************
+ * ws_time_utc
+ * Read weather station's UTC time
+ * 
+ * Input:  Handle to weatherstation
+ *         
+ * Output: timestamp - pointer to timestamp structure to store result
+ * 
+ * Returns: Nothing (fills timestamp structure)
+ *
+ ********************************************************************/
+void ws_time_utc(WEATHERSTATION ws2300, struct timestamp *timestamp)
+{
+	unsigned char data[20];
+	unsigned char command[25];
+	int address;
+	int bytes;
+	
+	// Read UTC time (second, minute, hour) from 0x200
+	address = 0x200;
+	bytes = 3;
+	
+	if (read_safe(ws2300, address, bytes, data, command) != bytes)
+		read_error_exit();
+	
+	// Note: timestamp struct doesn't have 'second' field, so we skip data[0]
+	timestamp->minute = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	timestamp->hour = ((data[2] >> 4) * 10) + (data[2] & 0xF);
+	
+	// Read UTC date (day, month, year) from 0x207
+	address = 0x207;
+	bytes = 3;
+	
+	if (read_safe(ws2300, address, bytes, data, command) != bytes)
+		read_error_exit();
+	
+	timestamp->day = ((data[0] >> 4) * 10) + (data[0] & 0xF);
+	timestamp->month = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	timestamp->year = 2000 + ((data[2] >> 4) * 10) + (data[2] & 0xF);
 	
 	return;
 }
