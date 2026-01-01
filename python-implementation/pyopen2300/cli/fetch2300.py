@@ -143,23 +143,49 @@ def main():
                 log(config, LOG_MIN, f"ERROR reading outdoor humidity: {e}")
                 print(f"Warning: Could not read outdoor humidity: {e}", file=sys.stderr)
             
-            # Wind data (simplified - full implementation would include all wind functions)
+            # Wind data
+            # Reading 6 bytes gives us current + last 5 wind directions
             log(config, LOG_MAX, "Reading wind speed and direction")
             try:
-                # Read wind speed from address 0x527
-                data = ws.read_safe(0x527, 3)
+                # Read wind speed and direction from address 0x527 (6 bytes total)
+                # data[0] = overflow flag (should be 0x00 for valid data)
+                # data[1] = low byte of wind speed
+                # data[2] = high nibble: current direction, low nibble: high bits of wind speed
+                # data[3-5] = last 5 wind directions (2 per byte, nibbles)
+                data = ws.read_safe(0x527, 6)
                 if data:
-                    wind_speed = ((data[2] >> 4) * 100 + (data[2] & 0xF) * 10 +
-                                 (data[1] >> 4) + (data[1] & 0xF) / 10.0)
-                    wind_speed = wind_speed * config.wind_speed_conv_factor / 10.0
-                    output.append(f"WS {wind_speed:.1f}")
-                    
-                    # Wind direction (simplified)
-                    dir_index = data[0] & 0x0F
-                    if dir_index < len(WIND_DIRECTIONS):
-                        wind_dir = WIND_DIRECTIONS[dir_index]
-                        output.append(f"DIRtext {wind_dir}")
-                        log(config, LOG_MED, f"Wind: {wind_speed:.1f} from {wind_dir}")
+                    # Check for invalid wind data (from C code logic)
+                    if (data[0] != 0x00 or 
+                        (data[1] == 0xFF and ((data[2] & 0xF) == 0 or (data[2] & 0xF) == 1))):
+                        log(config, LOG_MED, "Invalid wind data received, skipping")
+                    else:
+                        # Wind direction is in upper 4 bits of data[2]
+                        dir_index = (data[2] >> 4) & 0x0F
+                        
+                        # Wind speed is 12-bit value: lower 4 bits of data[2] + all of data[1]
+                        # Formula: ((data[2] & 0xF) << 8) + data[1]) / 10.0
+                        wind_speed_raw = (((data[2] & 0x0F) << 8) + data[1]) / 10.0
+                        wind_speed = wind_speed_raw * config.wind_speed_conv_factor
+                        
+                        output.append(f"WS {wind_speed:.1f}")
+                        
+                        if dir_index < len(WIND_DIRECTIONS):
+                            wind_dir = WIND_DIRECTIONS[dir_index]
+                            output.append(f"DIRtext {wind_dir}")
+                            
+                            # Debug: show all 6 direction values
+                            if config.log_level >= 3:  # LOG_MAX
+                                dir_degrees = [
+                                    (data[2] >> 4) * 22.5,  # Current
+                                    (data[3] & 0xF) * 22.5, # -1
+                                    (data[3] >> 4) * 22.5,  # -2
+                                    (data[4] & 0xF) * 22.5, # -3
+                                    (data[4] >> 4) * 22.5,  # -4
+                                    (data[5] & 0xF) * 22.5  # -5
+                                ]
+                                log(config, LOG_MAX, f"Wind directions (current to -5): {dir_degrees}")
+                            
+                            log(config, LOG_MED, f"Wind: {wind_speed:.1f} from {wind_dir} (index {dir_index})")
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading wind data: {e}")
                 print(f"Warning: Could not read wind data: {e}", file=sys.stderr)

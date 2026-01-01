@@ -6,6 +6,7 @@ Equivalent to rw2300.c in the original C implementation
 from typing import Tuple, Optional
 import sys
 import time
+import os
 from datetime import datetime
 from .serial_comm import SerialDevice, sleep_short
 from .constants import (
@@ -22,6 +23,14 @@ from .constants import (
     CELSIUS,
     FAHRENHEIT
 )
+
+# Debug flag - set via environment variable WS2300_DEBUG=1
+DEBUG = os.environ.get('WS2300_DEBUG', '0') == '1'
+
+def debug_print(msg):
+    """Print debug message if DEBUG is enabled"""
+    if DEBUG:
+        print(f"DEBUG[WS2300]: {msg}", file=sys.stderr, flush=True)
 
 
 class Timestamp:
@@ -167,29 +176,76 @@ class WeatherStation:
     def reset_06(self):
         """
         Reset weather station by sending 0x06 command
+        
+        Note: From C code comments:
+        "Occasionally 0, then 2 is returned. If zero comes back, continue
+        reading as this is more efficient than sending an out-of sync
+        reset and letting the data reads restore synchronization.
+        Occasionally, multiple 2's are returned. Read with a fast timeout
+        until all data is exhausted, if we got a two back at all, we
+        consider it a success"
         """
+        debug_print("reset_06: Starting reset sequence")
         command = bytes([0x06])
         
         for i in range(100):
+            debug_print(f"reset_06: Attempt {i+1}/100")
             # Discard input buffer
             try:
                 self.device.ser.reset_input_buffer()
-            except:
+                debug_print("reset_06: Input buffer flushed")
+            except Exception as e:
+                debug_print(f"reset_06: Error flushing buffer: {e}")
                 pass
             
+            # Small delay to let the flush complete and line stabilize
+            time.sleep(0.001)  # 1ms delay
+            
+            debug_print(f"reset_06: Sending command 0x06")
             self.device.write(command)
             
-            # Read responses until we get a 2
+            # Small delay to let the device process the command
+            time.sleep(0.01)  # 10ms delay (enough for 2-3 bytes at 2400 baud)
+            debug_print("reset_06: Waiting for response...")
+            
+            # Read responses until we get a 2 OR timeout
+            # Keep reading as long as data comes back
+            # The station may send 0x00 first, then 0x02
+            read_count = 0
+            got_two = False
             while True:
+                debug_print(f"reset_06: Reading response byte {read_count+1}")
                 answer = self.device.read(1)
                 if len(answer) == 0:
+                    # Timeout - no more data
+                    debug_print(f"reset_06: Timeout after {read_count} bytes")
                     break
+                read_count += 1
+                debug_print(f"reset_06: Received byte {read_count}: 0x{answer[0]:02x}")
                 if answer[0] == 2:
-                    return
+                    debug_print(f"reset_06: Got 0x02 at byte {read_count}")
+                    got_two = True
+                    # Keep reading to drain any additional 0x02 bytes
+                elif answer[0] == 0:
+                    debug_print(f"reset_06: Got 0x00 at byte {read_count}, continuing...")
+                    # Continue reading, 0x02 may follow
+                else:
+                    debug_print(f"reset_06: Got unexpected byte 0x{answer[0]:02x}")
+            
+            # If we got a 0x02 at any point, consider it success
+            if got_two:
+                debug_print(f"reset_06: SUCCESS - received 0x02 (total {read_count} bytes read)")
+                return
+            
+            debug_print(f"reset_06: No 0x02 received in {read_count} bytes")
             
             # Sleep longer for each retry
-            time.sleep(0.05 * i)
+            if i > 0:
+                sleep_time = 0.05 * i
+                debug_print(f"reset_06: Sleeping {sleep_time:.3f}s before retry")
+                time.sleep(sleep_time)
         
+        debug_print("reset_06: FAILED after 100 attempts")
         print("Could not reset weather station", file=sys.stderr)
         sys.exit(1)
     
@@ -239,44 +295,76 @@ class WeatherStation:
         Returns:
             Tuple of (data bytes, command bytes) or (None, command) on failure
         """
+        debug_print(f"read_data: Reading {number} bytes from address 0x{address:04x}")
+        
         # Encode address
         commanddata = bytearray(self.address_encoder(address))
         commanddata.append(self.numberof_encoder(number))
+        debug_print(f"read_data: Command bytes: {' '.join(f'0x{b:02x}' for b in commanddata)}")
         
         # Send 4 address bytes
         for i in range(4):
+            debug_print(f"read_data: Sending address byte {i}: 0x{commanddata[i]:02x}")
             if self.device.write(bytes([commanddata[i]])) != 1:
+                debug_print(f"read_data: FAILED to write address byte {i}")
                 return None, bytes(commanddata)
+            
+            debug_print(f"read_data: Reading ACK for address byte {i}")
             answer = self.device.read(1)
             if len(answer) != 1:
+                debug_print(f"read_data: No ACK received for address byte {i} (timeout)")
                 return None, bytes(commanddata)
-            if answer[0] != self.command_check0123(commanddata[i], i):
+            
+            expected = self.command_check0123(commanddata[i], i)
+            debug_print(f"read_data: Received ACK: 0x{answer[0]:02x}, expected: 0x{expected:02x}")
+            if answer[0] != expected:
+                debug_print(f"read_data: ACK mismatch for address byte {i}")
                 return None, bytes(commanddata)
         
         # Send number-of-bytes command
+        debug_print(f"read_data: Sending number-of-bytes command: 0x{commanddata[4]:02x}")
         if self.device.write(bytes([commanddata[4]])) != 1:
+            debug_print("read_data: FAILED to write number-of-bytes command")
             return None, bytes(commanddata)
+        
+        debug_print("read_data: Reading ACK for number-of-bytes")
         answer = self.device.read(1)
         if len(answer) != 1:
+            debug_print("read_data: No ACK received for number-of-bytes (timeout)")
             return None, bytes(commanddata)
-        if answer[0] != self.command_check4(number):
+        
+        expected = self.command_check4(number)
+        debug_print(f"read_data: Received ACK: 0x{answer[0]:02x}, expected: 0x{expected:02x}")
+        if answer[0] != expected:
+            debug_print("read_data: ACK mismatch for number-of-bytes")
             return None, bytes(commanddata)
         
         # Read data bytes
+        debug_print(f"read_data: Reading {number} data bytes")
         readdata = bytearray()
         for i in range(number):
+            debug_print(f"read_data: Reading data byte {i+1}/{number}")
             data = self.device.read(1)
             if len(data) != 1:
+                debug_print(f"read_data: Timeout reading data byte {i+1}")
                 return None, bytes(commanddata)
+            debug_print(f"read_data: Data byte {i+1}: 0x{data[0]:02x}")
             readdata.append(data[0])
         
         # Read and verify checksum
+        debug_print("read_data: Reading checksum")
         answer = self.device.read(1)
         if len(answer) != 1:
-            return None, bytes(commanddata)
-        if answer[0] != self.data_checksum(bytes(readdata), number):
+            debug_print("read_data: Timeout reading checksum")
             return None, bytes(commanddata)
         
+        expected_checksum = self.data_checksum(bytes(readdata), number)
+        debug_print(f"read_data: Received checksum: 0x{answer[0]:02x}, expected: 0x{expected_checksum:02x}")
+        if answer[0] != expected_checksum:
+            debug_print("read_data: Checksum mismatch")
+            return None, bytes(commanddata)
+        
+        debug_print(f"read_data: SUCCESS - Read data: {' '.join(f'0x{b:02x}' for b in readdata)}")
         return bytes(readdata), bytes(commanddata)
     
     def write_data(self, address: int, number: int, encode_constant: int, 
@@ -339,12 +427,19 @@ class WeatherStation:
         Returns:
             Data bytes or None on failure
         """
+        debug_print(f"read_safe: Starting read from 0x{address:04x}, {number} bytes (max {MAXRETRIES} retries)")
+        
         for j in range(MAXRETRIES):
+            debug_print(f"read_safe: Attempt {j+1}/{MAXRETRIES}")
             self.reset_06()
+            debug_print(f"read_safe: Reset complete, attempting read")
             data, _ = self.read_data(address, number)
             if data is not None and len(data) == number:
+                debug_print(f"read_safe: SUCCESS on attempt {j+1}")
                 return data
+            debug_print(f"read_safe: Attempt {j+1} failed, will retry")
         
+        debug_print(f"read_safe: FAILED after {MAXRETRIES} attempts")
         return None
     
     def write_safe(self, address: int, number: int, encode_constant: int,
@@ -381,15 +476,21 @@ class WeatherStation:
         Returns:
             Temperature in specified units
         """
+        debug_print("temperature_indoor: Starting read from address 0x346")
         data = self.read_safe(0x346, 2)
         if data is None:
+            debug_print("temperature_indoor: FAILED - read_safe returned None")
             raise IOError("Failed to read indoor temperature")
         
+        debug_print(f"temperature_indoor: Raw data: 0x{data[0]:02x} 0x{data[1]:02x}")
         temp_c = (((data[1] >> 4) * 10 + (data[1] & 0xF) +
                    (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) - 30.0)
+        debug_print(f"temperature_indoor: Calculated temperature: {temp_c:.1f}°C")
         
         if temperature_conv == FAHRENHEIT:
-            return temp_c * 9 / 5 + 32
+            temp_f = temp_c * 9 / 5 + 32
+            debug_print(f"temperature_indoor: Converted to Fahrenheit: {temp_f:.1f}°F")
+            return temp_f
         return temp_c
     
     def temperature_outdoor(self, temperature_conv: int = CELSIUS) -> float:
@@ -470,7 +571,8 @@ class WeatherStation:
         Returns:
             Pressure in specified units
         """
-        data = self.read_safe(0x5D8, 3)
+        # Address 0x5E2 for relative pressure (not 0x5D8!)
+        data = self.read_safe(0x5E2, 3)
         if data is None:
             raise IOError("Failed to read pressure")
         
