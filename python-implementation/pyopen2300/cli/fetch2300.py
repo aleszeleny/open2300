@@ -88,115 +88,209 @@ def main():
             output.append(f"Date {now.strftime('%Y-%b-%d')}")
             output.append(f"Time {now.strftime('%H:%M:%S')}")
             
-            # Indoor temperature
+            # Indoor temperature with min/max
             log(config, LOG_MAX, "Reading indoor temperature")
             try:
                 ti = ws.temperature_indoor(config.temperature_conv)
                 output.append(f"Ti {ti:.1f}")
-                log(config, LOG_MED, f"Indoor temperature: {ti:.1f}")
-                # Note: Min/max functions would be added here
+                
+                ti_min, ti_max, time_min, time_max = ws.temperature_indoor_minmax(config.temperature_conv)
+                output.append(f"Timin {ti_min:.1f}")
+                output.append(f"Timax {ti_max:.1f}")
+                output.append(f"TTimin {time_min.hour:02d}:{time_min.minute:02d}")
+                output.append(f"DTimin {time_min.year:04d}-{time_min.month:02d}-{time_min.day:02d}")
+                output.append(f"TTimax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DTimax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Indoor temperature: {ti:.1f} (min: {ti_min:.1f}, max: {ti_max:.1f})")
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading indoor temperature: {e}")
                 print(f"Warning: Could not read indoor temperature: {e}", file=sys.stderr)
             
-            # Outdoor temperature
+            # Outdoor temperature with min/max
             log(config, LOG_MAX, "Reading outdoor temperature")
             try:
                 to = ws.temperature_outdoor(config.temperature_conv)
                 output.append(f"To {to:.1f}")
-                log(config, LOG_MED, f"Outdoor temperature: {to:.1f}")
-                # Note: Min/max functions would be added here
+                
+                to_min, to_max, time_min, time_max = ws.temperature_outdoor_minmax(config.temperature_conv)
+                output.append(f"Tomin {to_min:.1f}")
+                output.append(f"Tomax {to_max:.1f}")
+                output.append(f"TTomin {time_min.hour:02d}:{time_min.minute:02d}")
+                output.append(f"DTomin {time_min.year:04d}-{time_min.month:02d}-{time_min.day:02d}")
+                output.append(f"TTomax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DTomax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Outdoor temperature: {to:.1f} (min: {to_min:.1f}, max: {to_max:.1f})")
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading outdoor temperature: {e}")
                 print(f"Warning: Could not read outdoor temperature: {e}", file=sys.stderr)
             
-            # Dewpoint
+            # Dewpoint with min/max
             log(config, LOG_MAX, "Reading dewpoint")
             try:
                 dp = ws.dewpoint(config.temperature_conv)
                 output.append(f"DP {dp:.1f}")
-                log(config, LOG_MED, f"Dewpoint: {dp:.1f}")
-                # Note: Min/max functions would be added here
+                
+                dp_min, dp_max, time_min, time_max = ws.dewpoint_minmax(config.temperature_conv)
+                output.append(f"DPmin {dp_min:.1f}")
+                output.append(f"DPmax {dp_max:.1f}")
+                output.append(f"TDPmin {time_min.hour:02d}:{time_min.minute:02d}")
+                output.append(f"DDPmin {time_min.year:04d}-{time_min.month:02d}-{time_min.day:02d}")
+                output.append(f"TDPmax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DDPmax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Dewpoint: {dp:.1f} (min: {dp_min:.1f}, max: {dp_max:.1f})")
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading dewpoint: {e}")
                 print(f"Warning: Could not read dewpoint: {e}", file=sys.stderr)
             
-            # Indoor humidity
+            # Indoor humidity with min/max
             log(config, LOG_MAX, "Reading indoor humidity")
             try:
-                rhi = ws.humidity_indoor()
+                rhi, rhi_min, rhi_max, time_min, time_max = ws.humidity_indoor_all()
                 output.append(f"RHi {rhi}")
-                log(config, LOG_MED, f"Indoor humidity: {rhi}%")
-                # Note: Min/max functions would be added here
+                output.append(f"RHimin {rhi_min}")
+                output.append(f"RHimax {rhi_max}")
+                output.append(f"TRHimin {time_min.hour:02d}:{time_min.minute:02d}")
+                output.append(f"DRHimin {time_min.year:04d}-{time_min.month:02d}-{time_min.day:02d}")
+                output.append(f"TRHimax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DRHimax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Indoor humidity: {rhi}% (min: {rhi_min}%, max: {rhi_max}%)")
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading indoor humidity: {e}")
                 print(f"Warning: Could not read indoor humidity: {e}", file=sys.stderr)
             
-            # Outdoor humidity
+            # Outdoor humidity with min/max
             log(config, LOG_MAX, "Reading outdoor humidity")
             try:
-                rho = ws.humidity_outdoor()
+                rho, rho_min, rho_max, time_min, time_max = ws.humidity_outdoor_all()
                 output.append(f"RHo {rho}")
-                log(config, LOG_MED, f"Outdoor humidity: {rho}%")
-                # Note: Min/max functions would be added here
+                output.append(f"RHomin {rho_min}")
+                output.append(f"RHomax {rho_max}")
+                output.append(f"TRHomin {time_min.hour:02d}:{time_min.minute:02d}")
+                output.append(f"DRHomin {time_min.year:04d}-{time_min.month:02d}-{time_min.day:02d}")
+                output.append(f"TRHomax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DRHomax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Outdoor humidity: {rho}% (min: {rho_min}%, max: {rho_max}%)")
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading outdoor humidity: {e}")
                 print(f"Warning: Could not read outdoor humidity: {e}", file=sys.stderr)
             
             # Wind data
-            # Reading 6 bytes gives us current + last 5 wind directions
             log(config, LOG_MAX, "Reading wind speed and direction")
             try:
-                # Read wind speed and direction from address 0x527 (6 bytes total)
-                # data[0] = overflow flag (should be 0x00 for valid data)
-                # data[1] = low byte of wind speed
-                # data[2] = high nibble: current direction, low nibble: high bits of wind speed
-                # data[3-5] = last 5 wind directions (2 per byte, nibbles)
-                data = ws.read_safe(0x527, 6)
-                if data:
-                    # Check for invalid wind data (from C code logic)
-                    if (data[0] != 0x00 or 
-                        (data[1] == 0xFF and ((data[2] & 0xF) == 0 or (data[2] & 0xF) == 1))):
-                        log(config, LOG_MED, "Invalid wind data received, skipping")
-                    else:
-                        # Wind direction is in upper 4 bits of data[2]
-                        dir_index = (data[2] >> 4) & 0x0F
-                        
-                        # Wind speed is 12-bit value: lower 4 bits of data[2] + all of data[1]
-                        # Formula: ((data[2] & 0xF) << 8) + data[1]) / 10.0
-                        wind_speed_raw = (((data[2] & 0x0F) << 8) + data[1]) / 10.0
-                        wind_speed = wind_speed_raw * config.wind_speed_conv_factor
-                        
-                        output.append(f"WS {wind_speed:.1f}")
-                        
-                        if dir_index < len(WIND_DIRECTIONS):
-                            wind_dir = WIND_DIRECTIONS[dir_index]
-                            output.append(f"DIRtext {wind_dir}")
-                            
-                            # Debug: show all 6 direction values
-                            if config.log_level >= 3:  # LOG_MAX
-                                dir_degrees = [
-                                    (data[2] >> 4) * 22.5,  # Current
-                                    (data[3] & 0xF) * 22.5, # -1
-                                    (data[3] >> 4) * 22.5,  # -2
-                                    (data[4] & 0xF) * 22.5, # -3
-                                    (data[4] >> 4) * 22.5,  # -4
-                                    (data[5] & 0xF) * 22.5  # -5
-                                ]
-                                log(config, LOG_MAX, f"Wind directions (current to -5): {dir_degrees}")
-                            
-                            log(config, LOG_MED, f"Wind: {wind_speed:.1f} from {wind_dir} (index {dir_index})")
+                wind_speed, winddir_index, winddir = ws.wind_all(config.wind_speed_conv_factor)
+                output.append(f"WS {wind_speed:.1f}")
+                
+                if winddir_index < len(WIND_DIRECTIONS):
+                    wind_dir = WIND_DIRECTIONS[winddir_index]
+                    output.append(f"DIRtext {wind_dir}")
+                    output.append(f"DIR0 {winddir[0]:.1f}")
+                    output.append(f"DIR1 {winddir[1]:.1f}")
+                    output.append(f"DIR2 {winddir[2]:.1f}")
+                    output.append(f"DIR3 {winddir[3]:.1f}")
+                    output.append(f"DIR4 {winddir[4]:.1f}")
+                    output.append(f"DIR5 {winddir[5]:.1f}")
+                    
+                    log(config, LOG_MED, f"Wind: {wind_speed:.1f} from {wind_dir}")
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading wind data: {e}")
                 print(f"Warning: Could not read wind data: {e}", file=sys.stderr)
             
-            # Pressure
+            # Windchill with min/max
+            log(config, LOG_MAX, "Reading windchill")
+            try:
+                wc = ws.windchill(config.temperature_conv)
+                output.append(f"WC {wc:.1f}")
+                
+                wc_min, wc_max, time_min, time_max = ws.windchill_minmax(config.temperature_conv)
+                output.append(f"WCmin {wc_min:.1f}")
+                output.append(f"WCmax {wc_max:.1f}")
+                output.append(f"TWCmin {time_min.hour:02d}:{time_min.minute:02d}")
+                output.append(f"DWCmin {time_min.year:04d}-{time_min.month:02d}-{time_min.day:02d}")
+                output.append(f"TWCmax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DWCmax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Windchill: {wc:.1f} (min: {wc_min:.1f}, max: {wc_max:.1f})")
+            except Exception as e:
+                log(config, LOG_MIN, f"ERROR reading windchill: {e}")
+                print(f"Warning: Could not read windchill: {e}", file=sys.stderr)
+            
+            # Wind speed min/max
+            log(config, LOG_MAX, "Reading wind speed min/max")
+            try:
+                ws_min, ws_max, time_min, time_max = ws.wind_minmax(config.wind_speed_conv_factor)
+                output.append(f"WSmin {ws_min:.1f}")
+                output.append(f"WSmax {ws_max:.1f}")
+                output.append(f"TWSmin {time_min.hour:02d}:{time_min.minute:02d}")
+                output.append(f"DWSmin {time_min.year:04d}-{time_min.month:02d}-{time_min.day:02d}")
+                output.append(f"TWSmax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DWSmax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Wind speed: min {ws_min:.1f}, max {ws_max:.1f}")
+            except Exception as e:
+                log(config, LOG_MIN, f"ERROR reading wind min/max: {e}")
+                print(f"Warning: Could not read wind min/max: {e}", file=sys.stderr)
+            
+            # Rain 1h
+            log(config, LOG_MAX, "Reading rain 1h")
+            try:
+                r1h, r1h_max, time_max = ws.rain_1h_all(config.rain_conv_factor)
+                output.append(f"R1h {r1h:.2f}")
+                output.append(f"R1hmax {r1h_max:.2f}")
+                output.append(f"TR1hmax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DR1hmax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Rain 1h: {r1h:.2f} (max: {r1h_max:.2f})")
+            except Exception as e:
+                log(config, LOG_MIN, f"ERROR reading rain 1h: {e}")
+                print(f"Warning: Could not read rain 1h: {e}", file=sys.stderr)
+            
+            # Rain 24h
+            log(config, LOG_MAX, "Reading rain 24h")
+            try:
+                r24h, r24h_max, time_max = ws.rain_24h_all(config.rain_conv_factor)
+                output.append(f"R24h {r24h:.2f}")
+                output.append(f"R24hmax {r24h_max:.2f}")
+                output.append(f"TR24hmax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DR24hmax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Rain 24h: {r24h:.2f} (max: {r24h_max:.2f})")
+            except Exception as e:
+                log(config, LOG_MIN, f"ERROR reading rain 24h: {e}")
+                print(f"Warning: Could not read rain 24h: {e}", file=sys.stderr)
+            
+            # Rain total
+            log(config, LOG_MAX, "Reading rain total")
+            try:
+                rtot, time_since = ws.rain_total_all(config.rain_conv_factor)
+                output.append(f"Rtot {rtot:.2f}")
+                output.append(f"TRtot {time_since.hour:02d}:{time_since.minute:02d}")
+                output.append(f"DRtot {time_since.year:04d}-{time_since.month:02d}-{time_since.day:02d}")
+                
+                log(config, LOG_MED, f"Rain total: {rtot:.2f}")
+            except Exception as e:
+                log(config, LOG_MIN, f"ERROR reading rain total: {e}")
+                print(f"Warning: Could not read rain total: {e}", file=sys.stderr)
+            
+            # Pressure with min/max
             log(config, LOG_MAX, "Reading relative pressure")
             try:
                 rp = ws.rel_pressure(config.pressure_conv_factor)
                 output.append(f"RP {rp:.3f}")
-                log(config, LOG_MED, f"Relative pressure: {rp:.3f}")
-                # Note: Min/max functions would be added here
+                
+                rp_min, rp_max, time_min, time_max = ws.rel_pressure_minmax(config.pressure_conv_factor)
+                output.append(f"RPmin {rp_min:.3f}")
+                output.append(f"RPmax {rp_max:.3f}")
+                output.append(f"TRPmin {time_min.hour:02d}:{time_min.minute:02d}")
+                output.append(f"DRPmin {time_min.year:04d}-{time_min.month:02d}-{time_min.day:02d}")
+                output.append(f"TRPmax {time_max.hour:02d}:{time_max.minute:02d}")
+                output.append(f"DRPmax {time_max.year:04d}-{time_max.month:02d}-{time_max.day:02d}")
+                
+                log(config, LOG_MED, f"Relative pressure: {rp:.3f} (min: {rp_min:.3f}, max: {rp_max:.3f})")
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading pressure: {e}")
                 print(f"Warning: Could not read pressure: {e}", file=sys.stderr)
@@ -211,11 +305,6 @@ def main():
             except Exception as e:
                 log(config, LOG_MIN, f"ERROR reading tendency/forecast: {e}")
                 print(f"Warning: Could not read tendency/forecast: {e}", file=sys.stderr)
-            
-            # Rain data (simplified - would need full implementation)
-            log(config, LOG_MAX, "Reading rain data")
-            # Note: Rain functions require more complex calculations
-            output.append("# Rain data functions not yet fully implemented")
             
             log(config, LOG_MIN, "Closing weather station")
             
@@ -239,4 +328,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

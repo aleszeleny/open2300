@@ -603,4 +603,451 @@ class WeatherStation:
         forecast = forecasts[forecast_val] if forecast_val < 3 else "Unknown"
         
         return tendency, forecast
+    
+    def temperature_indoor_minmax(self, temperature_conv: int = CELSIUS) -> Tuple[float, float, Timestamp, Timestamp]:
+        """
+        Read indoor temperature min/max with timestamps
+        
+        Args:
+            temperature_conv: Temperature conversion (CELSIUS or FAHRENHEIT)
+            
+        Returns:
+            Tuple of (temp_min, temp_max, time_min, time_max)
+        """
+        data = self.read_safe(0x34B, 15)
+        if data is None:
+            raise IOError("Failed to read indoor temperature min/max")
+        
+        temp_min = ((data[1] >> 4) * 10 + (data[1] & 0xF) + (data[0] >> 4) / 10.0 +
+                    (data[0] & 0xF) / 100.0) - 30.0
+        temp_max = ((data[4] & 0xF) * 10 + (data[3] >> 4) + (data[3] & 0xF) / 10.0 +
+                    (data[2] >> 4) / 100.0) - 30.0
+        
+        if temperature_conv == FAHRENHEIT:
+            temp_min = temp_min * 9 / 5 + 32
+            temp_max = temp_max * 9 / 5 + 32
+        
+        time_min = Timestamp()
+        time_min.minute = ((data[5] & 0xF) * 10) + (data[4] >> 4)
+        time_min.hour = ((data[6] & 0xF) * 10) + (data[5] >> 4)
+        time_min.day = ((data[7] & 0xF) * 10) + (data[6] >> 4)
+        time_min.month = ((data[8] & 0xF) * 10) + (data[7] >> 4)
+        time_min.year = 2000 + ((data[9] & 0xF) * 10) + (data[8] >> 4)
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[10] & 0xF) * 10) + (data[9] >> 4)
+        time_max.hour = ((data[11] & 0xF) * 10) + (data[10] >> 4)
+        time_max.day = ((data[12] & 0xF) * 10) + (data[11] >> 4)
+        time_max.month = ((data[13] & 0xF) * 10) + (data[12] >> 4)
+        time_max.year = 2000 + ((data[14] & 0xF) * 10) + (data[13] >> 4)
+        
+        return temp_min, temp_max, time_min, time_max
+    
+    def temperature_outdoor_minmax(self, temperature_conv: int = CELSIUS) -> Tuple[float, float, Timestamp, Timestamp]:
+        """
+        Read outdoor temperature min/max with timestamps
+        
+        Args:
+            temperature_conv: Temperature conversion (CELSIUS or FAHRENHEIT)
+            
+        Returns:
+            Tuple of (temp_min, temp_max, time_min, time_max)
+        """
+        data = self.read_safe(0x378, 15)
+        if data is None:
+            raise IOError("Failed to read outdoor temperature min/max")
+        
+        temp_min = ((data[1] >> 4) * 10 + (data[1] & 0xF) + (data[0] >> 4) / 10.0 +
+                    (data[0] & 0xF) / 100.0) - 30.0
+        temp_max = ((data[4] & 0xF) * 10 + (data[3] >> 4) + (data[3] & 0xF) / 10.0 +
+                    (data[2] >> 4) / 100.0) - 30.0
+        
+        if temperature_conv == FAHRENHEIT:
+            temp_min = temp_min * 9 / 5 + 32
+            temp_max = temp_max * 9 / 5 + 32
+        
+        time_min = Timestamp()
+        time_min.minute = ((data[5] & 0xF) * 10) + (data[4] >> 4)
+        time_min.hour = ((data[6] & 0xF) * 10) + (data[5] >> 4)
+        time_min.day = ((data[7] & 0xF) * 10) + (data[6] >> 4)
+        time_min.month = ((data[8] & 0xF) * 10) + (data[7] >> 4)
+        time_min.year = 2000 + ((data[9] & 0xF) * 10) + (data[8] >> 4)
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[10] & 0xF) * 10) + (data[9] >> 4)
+        time_max.hour = ((data[11] & 0xF) * 10) + (data[10] >> 4)
+        time_max.day = ((data[12] & 0xF) * 10) + (data[11] >> 4)
+        time_max.month = ((data[13] & 0xF) * 10) + (data[12] >> 4)
+        time_max.year = 2000 + ((data[14] & 0xF) * 10) + (data[13] >> 4)
+        
+        return temp_min, temp_max, time_min, time_max
+    
+    def dewpoint_minmax(self, temperature_conv: int = CELSIUS) -> Tuple[float, float, Timestamp, Timestamp]:
+        """
+        Read dewpoint min/max with timestamps
+        
+        Args:
+            temperature_conv: Temperature conversion (CELSIUS or FAHRENHEIT)
+            
+        Returns:
+            Tuple of (dewpoint_min, dewpoint_max, time_min, time_max)
+        """
+        data = self.read_safe(0x3D3, 15)
+        if data is None:
+            raise IOError("Failed to read dewpoint min/max")
+        
+        dp_min = ((data[1] >> 4) * 10 + (data[1] & 0xF) + (data[0] >> 4) / 10.0 +
+                  (data[0] & 0xF) / 100.0) - 30.0
+        dp_max = ((data[4] & 0xF) * 10 + (data[3] >> 4) + (data[3] & 0xF) / 10.0 +
+                  (data[2] >> 4) / 100.0) - 30.0
+        
+        if temperature_conv == FAHRENHEIT:
+            dp_min = dp_min * 9 / 5 + 32
+            dp_max = dp_max * 9 / 5 + 32
+        
+        time_min = Timestamp()
+        time_min.minute = ((data[5] & 0xF) * 10) + (data[4] >> 4)
+        time_min.hour = ((data[6] & 0xF) * 10) + (data[5] >> 4)
+        time_min.day = ((data[7] & 0xF) * 10) + (data[6] >> 4)
+        time_min.month = ((data[8] & 0xF) * 10) + (data[7] >> 4)
+        time_min.year = 2000 + ((data[9] & 0xF) * 10) + (data[8] >> 4)
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[10] & 0xF) * 10) + (data[9] >> 4)
+        time_max.hour = ((data[11] & 0xF) * 10) + (data[10] >> 4)
+        time_max.day = ((data[12] & 0xF) * 10) + (data[11] >> 4)
+        time_max.month = ((data[13] & 0xF) * 10) + (data[12] >> 4)
+        time_max.year = 2000 + ((data[14] & 0xF) * 10) + (data[13] >> 4)
+        
+        return dp_min, dp_max, time_min, time_max
+    
+    def humidity_indoor_all(self) -> Tuple[int, int, int, Timestamp, Timestamp]:
+        """
+        Read indoor humidity current, min, max with timestamps
+        
+        Returns:
+            Tuple of (humidity_current, humidity_min, humidity_max, time_min, time_max)
+        """
+        data = self.read_safe(0x3FB, 13)
+        if data is None:
+            raise IOError("Failed to read indoor humidity all")
+        
+        humidity_current = (data[0] >> 4) * 10 + (data[0] & 0xF)
+        humidity_min = (data[1] >> 4) * 10 + (data[1] & 0xF)
+        humidity_max = (data[2] >> 4) * 10 + (data[2] & 0xF)
+        
+        time_min = Timestamp()
+        time_min.minute = ((data[3] >> 4) * 10) + (data[3] & 0xF)
+        time_min.hour = ((data[4] >> 4) * 10) + (data[4] & 0xF)
+        time_min.day = ((data[5] >> 4) * 10) + (data[5] & 0xF)
+        time_min.month = ((data[6] >> 4) * 10) + (data[6] & 0xF)
+        time_min.year = 2000 + ((data[7] >> 4) * 10) + (data[7] & 0xF)
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[8] >> 4) * 10) + (data[8] & 0xF)
+        time_max.hour = ((data[9] >> 4) * 10) + (data[9] & 0xF)
+        time_max.day = ((data[10] >> 4) * 10) + (data[10] & 0xF)
+        time_max.month = ((data[11] >> 4) * 10) + (data[11] & 0xF)
+        time_max.year = 2000 + ((data[12] >> 4) * 10) + (data[12] & 0xF)
+        
+        return humidity_current, humidity_min, humidity_max, time_min, time_max
+    
+    def humidity_outdoor_all(self) -> Tuple[int, int, int, Timestamp, Timestamp]:
+        """
+        Read outdoor humidity current, min, max with timestamps
+        
+        Returns:
+            Tuple of (humidity_current, humidity_min, humidity_max, time_min, time_max)
+        """
+        data = self.read_safe(0x419, 13)
+        if data is None:
+            raise IOError("Failed to read outdoor humidity all")
+        
+        humidity_current = (data[0] >> 4) * 10 + (data[0] & 0xF)
+        humidity_min = (data[1] >> 4) * 10 + (data[1] & 0xF)
+        humidity_max = (data[2] >> 4) * 10 + (data[2] & 0xF)
+        
+        time_min = Timestamp()
+        time_min.minute = ((data[3] >> 4) * 10) + (data[3] & 0xF)
+        time_min.hour = ((data[4] >> 4) * 10) + (data[4] & 0xF)
+        time_min.day = ((data[5] >> 4) * 10) + (data[5] & 0xF)
+        time_min.month = ((data[6] >> 4) * 10) + (data[6] & 0xF)
+        time_min.year = 2000 + ((data[7] >> 4) * 10) + (data[7] & 0xF)
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[8] >> 4) * 10) + (data[8] & 0xF)
+        time_max.hour = ((data[9] >> 4) * 10) + (data[9] & 0xF)
+        time_max.day = ((data[10] >> 4) * 10) + (data[10] & 0xF)
+        time_max.month = ((data[11] >> 4) * 10) + (data[11] & 0xF)
+        time_max.year = 2000 + ((data[12] >> 4) * 10) + (data[12] & 0xF)
+        
+        return humidity_current, humidity_min, humidity_max, time_min, time_max
 
+    
+    def wind_all(self, wind_speed_conv_factor: float = 1.0) -> Tuple[float, int, list]:
+        """
+        Read wind speed, direction index, and last 6 directions
+        
+        Args:
+            wind_speed_conv_factor: Wind speed conversion factor
+            
+        Returns:
+            Tuple of (wind_speed, direction_index, direction_degrees_list)
+        """
+        for i in range(MAXWINDRETRIES):
+            data = self.read_safe(0x527, 6)
+            if data is None:
+                raise IOError("Failed to read wind data")
+            
+            # Check for invalid wind data
+            if (data[0] != 0x00 or 
+                (data[1] == 0xFF and ((data[2] & 0xF) == 0 or (data[2] & 0xF) == 1))):
+                if i < MAXWINDRETRIES - 1:
+                    time.sleep(10)  # Wait 10 seconds for new wind measurement
+                    continue
+                else:
+                    raise IOError("Invalid wind data after max retries")
+            else:
+                break
+        
+        # Calculate wind directions
+        winddir_index = (data[2] >> 4)
+        winddir = [
+            (data[2] >> 4) * 22.5,  # Current direction
+            (data[3] & 0xF) * 22.5,  # -1
+            (data[3] >> 4) * 22.5,   # -2
+            (data[4] & 0xF) * 22.5,  # -3
+            (data[4] >> 4) * 22.5,   # -4
+            (data[5] & 0xF) * 22.5   # -5
+        ]
+        
+        # Calculate raw wind speed - convert from m/s to whatever
+        wind_speed = (((data[2] & 0xF) << 8) + data[1]) / 10.0 * wind_speed_conv_factor
+        
+        return wind_speed, winddir_index, winddir
+    
+    def windchill(self, temperature_conv: int = CELSIUS) -> float:
+        """
+        Read windchill temperature
+        
+        Args:
+            temperature_conv: Temperature conversion (CELSIUS or FAHRENHEIT)
+            
+        Returns:
+            Windchill temperature in specified units
+        """
+        data = self.read_safe(0x3A0, 2)
+        if data is None:
+            raise IOError("Failed to read windchill")
+        
+        wc_c = ((data[1] >> 4) * 10 + (data[1] & 0xF) +
+                (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) - 30.0
+        
+        if temperature_conv == FAHRENHEIT:
+            return wc_c * 9 / 5 + 32
+        return wc_c
+    
+    def windchill_minmax(self, temperature_conv: int = CELSIUS) -> Tuple[float, float, Timestamp, Timestamp]:
+        """
+        Read windchill min/max with timestamps
+        
+        Args:
+            temperature_conv: Temperature conversion (CELSIUS or FAHRENHEIT)
+            
+        Returns:
+            Tuple of (wc_min, wc_max, time_min, time_max)
+        """
+        data = self.read_safe(0x3A5, 15)
+        if data is None:
+            raise IOError("Failed to read windchill min/max")
+        
+        wc_min = ((data[1] >> 4) * 10 + (data[1] & 0xF) + (data[0] >> 4) / 10.0 +
+                  (data[0] & 0xF) / 100.0) - 30.0
+        wc_max = ((data[4] & 0xF) * 10 + (data[3] >> 4) + (data[3] & 0xF) / 10.0 +
+                  (data[2] >> 4) / 100.0) - 30.0
+        
+        if temperature_conv == FAHRENHEIT:
+            wc_min = wc_min * 9 / 5 + 32
+            wc_max = wc_max * 9 / 5 + 32
+        
+        time_min = Timestamp()
+        time_min.minute = ((data[5] & 0xF) * 10) + (data[4] >> 4)
+        time_min.hour = ((data[6] & 0xF) * 10) + (data[5] >> 4)
+        time_min.day = ((data[7] & 0xF) * 10) + (data[6] >> 4)
+        time_min.month = ((data[8] & 0xF) * 10) + (data[7] >> 4)
+        time_min.year = 2000 + ((data[9] & 0xF) * 10) + (data[8] >> 4)
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[10] & 0xF) * 10) + (data[9] >> 4)
+        time_max.hour = ((data[11] & 0xF) * 10) + (data[10] >> 4)
+        time_max.day = ((data[12] & 0xF) * 10) + (data[11] >> 4)
+        time_max.month = ((data[13] & 0xF) * 10) + (data[12] >> 4)
+        time_max.year = 2000 + ((data[14] & 0xF) * 10) + (data[13] >> 4)
+        
+        return wc_min, wc_max, time_min, time_max
+    
+    def wind_minmax(self, wind_speed_conv_factor: float = 1.0) -> Tuple[float, float, Timestamp, Timestamp]:
+        """
+        Read wind speed min/max with timestamps
+        
+        Args:
+            wind_speed_conv_factor: Wind speed conversion factor
+            
+        Returns:
+            Tuple of (wind_min, wind_max, time_min, time_max)
+        """
+        data = self.read_safe(0x4EE, 15)
+        if data is None:
+            raise IOError("Failed to read wind min/max")
+        
+        wind_min = (data[1] * 256 + data[0]) / 360.0 * wind_speed_conv_factor
+        wind_max = (data[4] * 256 + data[3]) / 360.0 * wind_speed_conv_factor
+        
+        time_min = Timestamp()
+        time_min.minute = ((data[5] >> 4) * 10) + (data[5] & 0xF)
+        time_min.hour = ((data[6] >> 4) * 10) + (data[6] & 0xF)
+        time_min.day = ((data[7] >> 4) * 10) + (data[7] & 0xF)
+        time_min.month = ((data[8] >> 4) * 10) + (data[8] & 0xF)
+        time_min.year = 2000 + ((data[9] >> 4) * 10) + (data[9] & 0xF)
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[10] >> 4) * 10) + (data[10] & 0xF)
+        time_max.hour = ((data[11] >> 4) * 10) + (data[11] & 0xF)
+        time_max.day = ((data[12] >> 4) * 10) + (data[12] & 0xF)
+        time_max.month = ((data[13] >> 4) * 10) + (data[13] & 0xF)
+        time_max.year = 2000 + ((data[14] >> 4) * 10) + (data[14] & 0xF)
+        
+        return wind_min, wind_max, time_min, time_max
+    
+    def rain_1h_all(self, rain_conv_factor: float = 1.0) -> Tuple[float, float, Timestamp]:
+        """
+        Read rain 1h current and max with timestamp
+        
+        Args:
+            rain_conv_factor: Rain conversion factor
+            
+        Returns:
+            Tuple of (rain_1h, rain_1h_max, time_max)
+        """
+        data = self.read_safe(0x4B4, 11)
+        if data is None:
+            raise IOError("Failed to read rain 1h data")
+        
+        rain_1h = ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                   (data[1] >> 4) * 10 + (data[1] & 0xF) + (data[0] >> 4) / 10.0 +
+                   (data[0] & 0xF) / 100.0) / rain_conv_factor
+        
+        rain_1h_max = ((data[5] >> 4) * 1000 + (data[5] & 0xF) * 100 +
+                       (data[4] >> 4) * 10 + (data[4] & 0xF) + (data[3] >> 4) / 10.0 +
+                       (data[3] & 0xF) / 100.0) / rain_conv_factor
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[6] >> 4) * 10) + (data[6] & 0xF)
+        time_max.hour = ((data[7] >> 4) * 10) + (data[7] & 0xF)
+        time_max.day = ((data[8] >> 4) * 10) + (data[8] & 0xF)
+        time_max.month = ((data[9] >> 4) * 10) + (data[9] & 0xF)
+        time_max.year = 2000 + ((data[10] >> 4) * 10) + (data[10] & 0xF)
+        
+        return rain_1h, rain_1h_max, time_max
+    
+    def rain_24h_all(self, rain_conv_factor: float = 1.0) -> Tuple[float, float, Timestamp]:
+        """
+        Read rain 24h current and max with timestamp
+        
+        Args:
+            rain_conv_factor: Rain conversion factor
+            
+        Returns:
+            Tuple of (rain_24h, rain_24h_max, time_max)
+        """
+        data = self.read_safe(0x497, 11)
+        if data is None:
+            raise IOError("Failed to read rain 24h data")
+        
+        rain_24h = ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                    (data[1] >> 4) * 10 + (data[1] & 0xF) + (data[0] >> 4) / 10.0 +
+                    (data[0] & 0xF) / 100.0) / rain_conv_factor
+        
+        rain_24h_max = ((data[5] >> 4) * 1000 + (data[5] & 0xF) * 100 +
+                        (data[4] >> 4) * 10 + (data[4] & 0xF) + (data[3] >> 4) / 10.0 +
+                        (data[3] & 0xF) / 100.0) / rain_conv_factor
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[6] >> 4) * 10) + (data[6] & 0xF)
+        time_max.hour = ((data[7] >> 4) * 10) + (data[7] & 0xF)
+        time_max.day = ((data[8] >> 4) * 10) + (data[8] & 0xF)
+        time_max.month = ((data[9] >> 4) * 10) + (data[9] & 0xF)
+        time_max.year = 2000 + ((data[10] >> 4) * 10) + (data[10] & 0xF)
+        
+        return rain_24h, rain_24h_max, time_max
+    
+    def rain_total_all(self, rain_conv_factor: float = 1.0) -> Tuple[float, Timestamp]:
+        """
+        Read rain total with timestamp since last reset
+        
+        Args:
+            rain_conv_factor: Rain conversion factor
+            
+        Returns:
+            Tuple of (rain_total, time_since)
+        """
+        data = self.read_safe(0x4D2, 8)
+        if data is None:
+            raise IOError("Failed to read rain total data")
+        
+        rain_total = ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                      (data[1] >> 4) * 10 + (data[1] & 0xF) +
+                      (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) / rain_conv_factor
+        
+        time_since = Timestamp()
+        time_since.minute = ((data[3] >> 4) * 10) + (data[3] & 0xF)
+        time_since.hour = ((data[4] >> 4) * 10) + (data[4] & 0xF)
+        time_since.day = ((data[5] >> 4) * 10) + (data[5] & 0xF)
+        time_since.month = ((data[6] >> 4) * 10) + (data[6] & 0xF)
+        time_since.year = 2000 + ((data[7] >> 4) * 10) + (data[7] & 0xF)
+        
+        return rain_total, time_since
+    
+    def rel_pressure_minmax(self, pressure_conv_factor: float = 1.0) -> Tuple[float, float, Timestamp, Timestamp]:
+        """
+        Read relative pressure min/max with timestamps
+        
+        Args:
+            pressure_conv_factor: Pressure conversion factor
+            
+        Returns:
+            Tuple of (pres_min, pres_max, time_min, time_max)
+        """
+        # Read min/max pressure values
+        data = self.read_safe(0x600, 13)
+        if data is None:
+            raise IOError("Failed to read pressure min/max")
+        
+        pres_min = ((data[2] & 0xF) * 1000 + (data[1] >> 4) * 100 +
+                    (data[1] & 0xF) * 10 + (data[0] >> 4) +
+                    (data[0] & 0xF) / 10.0) / pressure_conv_factor
+        
+        pres_max = ((data[12] & 0xF) * 1000 + (data[11] >> 4) * 100 +
+                    (data[11] & 0xF) * 10 + (data[10] >> 4) +
+                    (data[10] & 0xF) / 10.0) / pressure_conv_factor
+        
+        # Read timestamps
+        data = self.read_safe(0x61E, 10)
+        if data is None:
+            raise IOError("Failed to read pressure min/max timestamps")
+        
+        time_min = Timestamp()
+        time_min.minute = ((data[0] >> 4) * 10) + (data[0] & 0xF)
+        time_min.hour = ((data[1] >> 4) * 10) + (data[1] & 0xF)
+        time_min.day = ((data[2] >> 4) * 10) + (data[2] & 0xF)
+        time_min.month = ((data[3] >> 4) * 10) + (data[3] & 0xF)
+        time_min.year = 2000 + ((data[4] >> 4) * 10) + (data[4] & 0xF)
+        
+        time_max = Timestamp()
+        time_max.minute = ((data[5] >> 4) * 10) + (data[5] & 0xF)
+        time_max.hour = ((data[6] >> 4) * 10) + (data[6] & 0xF)
+        time_max.day = ((data[7] >> 4) * 10) + (data[7] & 0xF)
+        time_max.month = ((data[8] >> 4) * 10) + (data[8] & 0xF)
+        time_max.year = 2000 + ((data[9] >> 4) * 10) + (data[9] & 0xF)
+        
+        return pres_min, pres_max, time_min, time_max
