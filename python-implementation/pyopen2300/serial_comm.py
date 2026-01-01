@@ -6,8 +6,18 @@ Equivalent to linux2300.c in the original C implementation
 import serial
 import time
 import socket
+import sys
+import os
 from typing import Optional
 from .constants import BAUDRATE, DEFAULT_SERIAL_DEVICE
+
+# Debug flag - set via environment variable WS2300_DEBUG=1
+DEBUG = os.environ.get('WS2300_DEBUG', '0') == '1'
+
+def debug_print(msg):
+    """Print debug message if DEBUG is enabled"""
+    if DEBUG:
+        print(f"DEBUG[SERIAL]: {msg}", file=sys.stderr, flush=True)
 
 
 class SerialDevice:
@@ -26,6 +36,7 @@ class SerialDevice:
     
     def _open(self):
         """Open serial port connection"""
+        debug_print(f"Opening serial device: {self.device}")
         try:
             self.ser = serial.Serial(
                 port=self.device,
@@ -38,10 +49,22 @@ class SerialDevice:
                 rtscts=False,
                 dsrdtr=False
             )
+            debug_print(f"Serial port opened successfully: {self.device}")
+            debug_print(f"Baudrate: {BAUDRATE}, Timeout: 1.0s")
+            
+            # Set DTR low and RTS high (required for WS2300)
+            # This matches the C implementation in linux2300.c
+            debug_print("Setting DTR=low, RTS=high")
+            self.ser.dtr = False  # DTR low
+            self.ser.rts = True   # RTS high
+            debug_print(f"DTR={self.ser.dtr}, RTS={self.ser.rts}")
+            
             # Flush any existing data
             self.ser.reset_input_buffer()
             self.ser.reset_output_buffer()
+            debug_print("Input and output buffers flushed")
         except serial.SerialException as e:
+            debug_print(f"FAILED to open serial device: {e}")
             raise IOError(f"Cannot open serial device {self.device}: {e}")
     
     def close(self):
@@ -60,12 +83,21 @@ class SerialDevice:
             Bytes read from device
         """
         if not self.ser or not self.ser.is_open:
+            debug_print("ERROR: Attempting to read from closed serial device")
             raise IOError("Serial device not open")
         
         try:
+            debug_print(f"Reading {size} byte(s) from serial (timeout={self.ser.timeout}s)...")
+            start_time = time.time()
             data = self.ser.read(size)
+            elapsed = time.time() - start_time
+            if len(data) > 0:
+                debug_print(f"Read {len(data)}/{size} byte(s) in {elapsed:.3f}s: {' '.join(f'0x{b:02x}' for b in data)}")
+            else:
+                debug_print(f"Read 0/{size} byte(s) - TIMEOUT after {elapsed:.3f}s")
             return data
         except serial.SerialException as e:
+            debug_print(f"ERROR reading from serial device: {e}")
             raise IOError(f"Error reading from serial device: {e}")
     
     def write(self, data: bytes) -> int:
@@ -79,13 +111,17 @@ class SerialDevice:
             Number of bytes written
         """
         if not self.ser or not self.ser.is_open:
+            debug_print("ERROR: Attempting to write to closed serial device")
             raise IOError("Serial device not open")
         
         try:
+            debug_print(f"Writing {len(data)} byte(s): {' '.join(f'0x{b:02x}' for b in data)}")
             written = self.ser.write(data)
             self.ser.flush()
+            debug_print(f"Wrote {written} byte(s), flushed")
             return written
         except serial.SerialException as e:
+            debug_print(f"ERROR writing to serial device: {e}")
             raise IOError(f"Error writing to serial device: {e}")
     
     def __enter__(self):
