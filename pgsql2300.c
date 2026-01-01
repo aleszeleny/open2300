@@ -173,6 +173,11 @@ int main(int argc, char *argv[])
 //	strcat(logvalues, tempstring);
 
 
+	/* READ UTC DATE AND TIME FROM WEATHER STATION */
+	LOG(LOG_MAX, "READ UTC DATE AND TIME FROM WEATHER STATION.");
+	ws_time(ws2300, &ws_data.ws_datetime);
+
+
 // add the speed reset see open2300_zalohy/zafod/open2300/pgsql2300.c
 
 	/* READ WIND SPEED AND DIRECTION aND WINDCHILL */
@@ -237,7 +242,8 @@ int main(int argc, char *argv[])
 
   sql_query = fmt_alloc(
         "INSERT INTO %s (\n"
-        "     temperature_indoor\n"
+        "     ws_datetime\n"
+        "   , temperature_indoor\n"
         "   , temperature_outdoor\n"
         "   , dewpoint\n"
         "   , humidity_indoor\n"
@@ -249,10 +255,12 @@ int main(int argc, char *argv[])
         "   , rain_1h\n"
         "   , rain_24h\n"
         "   , rain_total\n"
+        "   , rel_pressure\n"
         "   , tendency\n"
         "   , forecast\n"
         ") VALUES (\n"
-        "     %.1f\n"
+        "     to_timestamp('%04d-%02d-%02d %02d:%02d','YYYY-MM-DD HH24:MI')\n"
+        "   , %.1f\n"
         "   , %.1f\n"
         "   , %.1f\n"
         "   , %d\n"
@@ -260,6 +268,7 @@ int main(int argc, char *argv[])
         "   , %.1f\n"
         "   , %.1f\n"
         "   , '%s'\n"
+        "   , %.1f\n"
         "   , %.1f\n"
         "   , %.1f\n"
         "   , %.1f\n"
@@ -268,10 +277,13 @@ int main(int argc, char *argv[])
         "   , '%s'\n"
         ")\n",
       config.pgsql_table,
+      ws_data.ws_datetime.year, ws_data.ws_datetime.month, ws_data.ws_datetime.day,
+      ws_data.ws_datetime.hour, ws_data.ws_datetime.minute,
       ws_data.temperature_indoor, ws_data.temperature_outdoor, ws_data.dewpoint,
       ws_data.humidity_indoor, ws_data.humidity_outdoor, ws_data.wind_speed,
       ws_data.wind_angle[0], ws_data.wind_direction, ws_data.wind_chill,
       ws_data.rain_1h, ws_data.rain_24h, ws_data.rain_total,
+      ws_data.rel_pressure,
       ws_data.tendency, ws_data.forecast);
 
   printf("%s", sql_query);

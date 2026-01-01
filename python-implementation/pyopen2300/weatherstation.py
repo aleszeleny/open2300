@@ -604,6 +604,34 @@ class WeatherStation:
         
         return tendency, forecast
     
+    def ws_time(self) -> Timestamp:
+        """
+        Read weather station's internal clock/date/time
+        
+        Returns:
+            Timestamp object with weather station's current time
+        """
+        data = self.read_safe(0x23B, 6)
+        if data is None:
+            raise IOError("Failed to read weather station time")
+        
+        # Decode BCD time/date from weather station
+        # data[0]: minute (BCD)
+        # data[1]: hour (BCD)
+        # data[2]: day (upper nibble only)
+        # data[3]: month (BCD)
+        # data[4]: year (BCD)
+        # data[5]: second (lower nibble only) - not stored in timestamp struct
+        
+        timestamp = Timestamp()
+        timestamp.minute = ((data[0] >> 4) * 10) + (data[0] & 0xF)
+        timestamp.hour = ((data[1] >> 4) * 10) + (data[1] & 0xF)
+        timestamp.day = ((data[2] >> 4) * 10) + (data[2] & 0xF)
+        timestamp.month = ((data[3] >> 4) * 10) + (data[3] & 0xF)
+        timestamp.year = 2000 + ((data[4] >> 4) * 10) + (data[4] & 0xF)
+        
+        return timestamp
+    
     def temperature_indoor_minmax(self, temperature_conv: int = CELSIUS) -> Tuple[float, float, Timestamp, Timestamp]:
         """
         Read indoor temperature min/max with timestamps

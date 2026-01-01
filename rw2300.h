@@ -126,6 +126,7 @@ struct weather_dataset
 	double rel_pressure;
 	char   tendency[15];
 	char   forecast[15];
+	struct timestamp ws_datetime;  // Weather station's internal clock
 };
 
 
@@ -266,6 +267,8 @@ int pressure_reset(WEATHERSTATION ws2300, char minmax);
 double pressure_correction(WEATHERSTATION ws2300, double pressure_conv_factor);
 
 void tendency_forecast(WEATHERSTATION ws2300, char *tendency, char *forecast);
+
+void ws_time(WEATHERSTATION ws2300, struct timestamp *timestamp);
 
 int read_history_info(WEATHERSTATION ws2300, int *interval, int *countdown,
                       struct timestamp *time_last, int *no_records);
