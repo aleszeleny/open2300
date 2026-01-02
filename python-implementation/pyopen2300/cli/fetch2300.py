@@ -349,6 +349,40 @@ def main():
                     log(config, LOG_MAX, f"Calculated UTC time: {ws_utc_calc.year:04d}-{ws_utc_calc.month:02d}-{ws_utc_calc.day:02d} {ws_utc_calc.hour:02d}:{ws_utc_calc.minute:02d}")
                 except Exception as e:
                     log(config, LOG_MAX, f"ERROR calculating UTC time: {e}")
+                
+                # Check DCF77 sync status
+                log(config, LOG_MAX, "Checking DCF77 synchronization status")
+                try:
+                    sync_status = ws.ws_dcf77_sync_status(config.timezone)
+                    if sync_status == 1:
+                        sync_str = "Synced"
+                    elif sync_status == 0:
+                        sync_str = "NotSynced"
+                    else:
+                        sync_str = "Unknown"
+                    output.append(f"DCF77Sync {sync_str}")
+                    log(config, LOG_MAX, f"DCF77 sync status: {sync_str}")
+                except Exception as e:
+                    log(config, LOG_MAX, f"ERROR checking DCF77 sync status: {e}")
+                
+                # Read connection type
+                log(config, LOG_MAX, "Reading connection type")
+                try:
+                    conn_type = ws.ws_connection_type()
+                    if conn_type == 0x0:
+                        conn_str = "Cable"
+                    elif conn_type == 0x3:
+                        conn_str = "Lost"
+                    elif conn_type == 0xF:
+                        conn_str = "Wireless"
+                    elif conn_type == -1:
+                        conn_str = "Error"
+                    else:
+                        conn_str = f"Unknown(0x{conn_type:02X})"
+                    output.append(f"ConnectionType {conn_str} (0x{conn_type:02X})")
+                    log(config, LOG_MAX, f"Connection type: {conn_str}")
+                except Exception as e:
+                    log(config, LOG_MAX, f"ERROR reading connection type: {e}")
             
             log(config, LOG_MIN, "Closing weather station")
             

@@ -284,6 +284,8 @@ int main(int argc, char *argv[])
 	if (DEBUG) {
 		double station_tz_offset;
 		struct timestamp calculated_utc;
+		int dcf77_sync;
+		const char *sync_status_str;
 		
 		printf("DEBUG:%s:%d\tws_timezone_offset_from_station()\n", __FILE__, __LINE__);
 		station_tz_offset = ws_timezone_offset_from_station(ws2300);
@@ -297,6 +299,37 @@ int main(int argc, char *argv[])
 		        calculated_utc.hour, calculated_utc.minute);
 		strcat(logline, tempstring);
 		sprintf(tempstring, "ConfigTZ %.1f\n", atof(config.timezone));
+		strcat(logline, tempstring);
+		
+		/* CHECK DCF77 SYNC STATUS */
+		printf("DEBUG:%s:%d\tws_dcf77_sync_status()\n", __FILE__, __LINE__);
+		dcf77_sync = ws_dcf77_sync_status(ws2300, atof(config.timezone));
+		if (dcf77_sync == 1) {
+			sync_status_str = "Synced";
+		} else if (dcf77_sync == 0) {
+			sync_status_str = "NotSynced";
+		} else {
+			sync_status_str = "Unknown";
+		}
+		sprintf(tempstring, "DCF77Sync %s\n", sync_status_str);
+		strcat(logline, tempstring);
+		
+		/* READ CONNECTION TYPE */
+		printf("DEBUG:%s:%d\tws_connection_type()\n", __FILE__, __LINE__);
+		int conn_type = ws_connection_type(ws2300);
+		const char *conn_str;
+		if (conn_type == 0x0) {
+			conn_str = "Cable";
+		} else if (conn_type == 0x3) {
+			conn_str = "Lost";
+		} else if (conn_type == 0xF) {
+			conn_str = "Wireless";
+		} else if (conn_type == -1) {
+			conn_str = "Error";
+		} else {
+			conn_str = "Unknown";
+		}
+		sprintf(tempstring, "ConnectionType %s (0x%02X)\n", conn_str, conn_type);
 		strcat(logline, tempstring);
 	}
 

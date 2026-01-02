@@ -277,6 +277,10 @@ void ws_time_utc_calculated(WEATHERSTATION ws2300, double timezone_offset, struc
 
 double ws_timezone_offset_from_station(WEATHERSTATION ws2300);
 
+int ws_dcf77_sync_status(WEATHERSTATION ws2300, double timezone_offset);
+
+int ws_connection_type(WEATHERSTATION ws2300);
+
 int read_history_info(WEATHERSTATION ws2300, int *interval, int *countdown,
                       struct timestamp *time_last, int *no_records);
 

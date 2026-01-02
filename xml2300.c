@@ -384,6 +384,25 @@ int main(int argc, char *argv[])
 			time_max.hour, time_max.minute);
 
 
+	/* <ConnectionType> - Weather Station Connection Type */
+	
+	int conn_type = ws_connection_type(ws2300);
+	const char *conn_str;
+	if (conn_type == 0x0) {
+		conn_str = "Cable";
+	} else if (conn_type == 0x3) {
+		conn_str = "Lost";
+	} else if (conn_type == 0xF) {
+		conn_str = "Wireless";
+	} else if (conn_type == -1) {
+		conn_str = "Error";
+	} else {
+		conn_str = "Unknown";
+	}
+	
+	fprintf(fileptr, "\t<ConnectionType>%s</ConnectionType>\n", conn_str);
+
+
 	fprintf(fileptr, "</ws2300>\n");
 
 	fflush(fileptr);

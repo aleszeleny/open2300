@@ -3293,3 +3293,63 @@ double ws_timezone_offset_from_station(WEATHERSTATION ws2300)
 	return (double)hour_diff;
 }
 
+
+/********************************************************************
+ * ws_dcf77_sync_status
+ * Read DCF77 synchronization status from station register
+ * 
+ * NOTE: Address 0x020 contains alarm active flags, with bit 2 marked
+ *       as "Time?" in the memory map. This bit appears to indicate
+ *       DCF77 synchronization status based on the station's display icon.
+ * 
+ * Input:  Handle to weatherstation
+ *         
+ * Returns: 1 if synced (bit 2 set), 0 if not synced (bit 2 clear), -1 if error
+ *
+ ********************************************************************/
+int ws_dcf77_sync_status(WEATHERSTATION ws2300, double timezone_offset)
+{
+	unsigned char data[20];
+	unsigned char command[25];
+	int address = 0x020;  // Alarm active flags register
+	int bytes = 1;
+	int sync_bit;
+	
+	// Read status register
+	if (read_safe(ws2300, address, bytes, data, command) != bytes)
+		return -1;  // Error reading
+	
+	// Check bit 2 (Time? bit) - this appears to indicate DCF77 sync status
+	// Bit 2 = 1 means synced, Bit 2 = 0 means not synced
+	sync_bit = (data[0] >> 2) & 0x01;
+	
+	return sync_bit;
+}
+
+
+/********************************************************************
+ * ws_connection_type
+ * Read connection type from weather station
+ * 
+ * Address: 0x54D
+ * Values: 0x0 = Cable, 0x3 = Lost, 0xF = Wireless
+ * 
+ * Input:  Handle to weatherstation
+ *         
+ * Returns: Connection type (0=Cable, 3=Lost, 15=Wireless), -1 if error
+ *
+ ********************************************************************/
+int ws_connection_type(WEATHERSTATION ws2300)
+{
+	unsigned char data[20];
+	unsigned char command[25];
+	int address = 0x54D;  // Connection type register
+	int bytes = 1;
+	
+	// Read connection type register
+	if (read_safe(ws2300, address, bytes, data, command) != bytes)
+		return -1;  // Error reading
+	
+	return (int)data[0];
+}
+
