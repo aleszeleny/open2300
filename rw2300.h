@@ -271,7 +271,11 @@ void tendency_forecast(WEATHERSTATION ws2300, char *tendency, char *forecast);
 
 void ws_time_local(WEATHERSTATION ws2300, struct timestamp *timestamp);
 
-void ws_time_utc(WEATHERSTATION ws2300, double timezone_offset, struct timestamp *timestamp);
+void ws_time_utc_from_station(WEATHERSTATION ws2300, struct timestamp *timestamp);
+
+void ws_time_utc_calculated(WEATHERSTATION ws2300, double timezone_offset, struct timestamp *timestamp);
+
+double ws_timezone_offset_from_station(WEATHERSTATION ws2300);
 
 int read_history_info(WEATHERSTATION ws2300, int *interval, int *countdown,
                       struct timestamp *time_last, int *no_records);

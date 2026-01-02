@@ -177,8 +177,8 @@ int main(int argc, char *argv[])
 	LOG(LOG_MAX, "READ LOCAL DATE AND TIME FROM WEATHER STATION.");
 	ws_time_local(ws2300, &ws_data.ws_datetime_local);
 	
-	LOG(LOG_MAX, "CALCULATE UTC DATE AND TIME FROM LOCAL TIME AND TIMEZONE OFFSET.");
-	ws_time_utc(ws2300, atof(config.timezone), &ws_data.ws_datetime_utc);
+	LOG(LOG_MAX, "READ UTC DATE AND TIME FROM WEATHER STATION.");
+	ws_time_utc_from_station(ws2300, &ws_data.ws_datetime_utc);
 
 
 // add the speed reset see open2300_zalohy/zafod/open2300/pgsql2300.c

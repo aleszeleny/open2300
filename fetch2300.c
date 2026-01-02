@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 	strcat(logline, tempstring);
 
 
-	/* READ WEATHER STATION LOCAL DATE AND TIME */
+	/* READ WEATHER STATION LOCAL DATE AND TIME (from station) */
 
 	if (DEBUG) printf("DEBUG:%s:%d\tws_time_local()\n", __FILE__, __LINE__);
 	ws_time_local(ws2300, &time_min);
@@ -269,15 +269,36 @@ int main(int argc, char *argv[])
 	strcat(logline, tempstring);
 
 
-	/* READ WEATHER STATION UTC DATE AND TIME */
-	/* UTC is calculated from local time using timezone offset from config */
+	/* READ WEATHER STATION UTC DATE AND TIME (from station memory) */
 
-	if (DEBUG) printf("DEBUG:%s:%d\tws_time_utc()\n", __FILE__, __LINE__);
-	ws_time_utc(ws2300, atof(config.timezone), &time_max);
+	if (DEBUG) printf("DEBUG:%s:%d\tws_time_utc_from_station()\n", __FILE__, __LINE__);
+	ws_time_utc_from_station(ws2300, &time_max);
 	sprintf(tempstring, "WSDateUTC %04d-%02d-%02d\nWSTimeUTC %02d:%02d\n",
 	        time_max.year, time_max.month, time_max.day,
 	        time_max.hour, time_max.minute);
 	strcat(logline, tempstring);
+
+
+	/* CALCULATE TIMEZONE OFFSET FROM STATION (local - UTC) */
+
+	if (DEBUG) {
+		double station_tz_offset;
+		struct timestamp calculated_utc;
+		
+		printf("DEBUG:%s:%d\tws_timezone_offset_from_station()\n", __FILE__, __LINE__);
+		station_tz_offset = ws_timezone_offset_from_station(ws2300);
+		sprintf(tempstring, "StationTZ %.1f\n", station_tz_offset);
+		strcat(logline, tempstring);
+		
+		printf("DEBUG:%s:%d\tws_time_utc_calculated()\n", __FILE__, __LINE__);
+		ws_time_utc_calculated(ws2300, atof(config.timezone), &calculated_utc);
+		sprintf(tempstring, "WSDateUTCCalc %04d-%02d-%02d\nWSTimeUTCCalc %02d:%02d\n",
+		        calculated_utc.year, calculated_utc.month, calculated_utc.day,
+		        calculated_utc.hour, calculated_utc.minute);
+		strcat(logline, tempstring);
+		sprintf(tempstring, "ConfigTZ %.1f\n", atof(config.timezone));
+		strcat(logline, tempstring);
+	}
 
 
 	/* GET DATE AND TIME FOR LOG FILE, PLACE BEFORE ALL DATA IN LOG LINE */

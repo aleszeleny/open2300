@@ -372,9 +372,9 @@ int main(int argc, char *argv[])
 			time_min.hour, time_min.minute);
 
 
-	/* <StationDateTimeUTC> - Weather Station UTC Time (calculated from local + timezone) */
+	/* <StationDateTimeUTC> - Weather Station UTC Time (from station memory) */
 	
-	ws_time_utc(ws2300, atof(config.timezone), &time_max);
+	ws_time_utc_from_station(ws2300, &time_max);
 	
 	fprintf(fileptr, "\t<StationDateTimeUTC>\n"
 			"\t\t<Date>%04d-%02d-%02d</Date>\n"

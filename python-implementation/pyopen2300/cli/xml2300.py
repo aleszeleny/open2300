@@ -125,9 +125,9 @@ def main():
             except:
                 pass
             
-            # Weather station UTC date/time (calculated from local + timezone)
+            # Weather station UTC date/time (from station memory)
             try:
-                ws_utc = ws.ws_time_utc(config.timezone)
+                ws_utc = ws.ws_time_utc_from_station()
                 station_utc = SubElement(root, 'station_datetime_utc')
                 date_elem = SubElement(station_utc, 'date')
                 date_elem.text = f"{ws_utc.year:04d}-{ws_utc.month:02d}-{ws_utc.day:02d}"

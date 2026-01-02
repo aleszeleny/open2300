@@ -317,16 +317,38 @@ def main():
                 log(config, LOG_MIN, f"ERROR reading station local time: {e}")
                 print(f"Warning: Could not read station local time: {e}", file=sys.stderr)
             
-            # Weather station UTC date/time (calculated from local + timezone)
-            log(config, LOG_MAX, "Calculating UTC time from local time and timezone offset")
+            # Weather station UTC date/time (from station memory)
+            log(config, LOG_MAX, "Reading UTC time from station memory")
             try:
-                ws_utc = ws.ws_time_utc(config.timezone)
+                ws_utc = ws.ws_time_utc_from_station()
                 output.append(f"WSDateUTC {ws_utc.year:04d}-{ws_utc.month:02d}-{ws_utc.day:02d}")
                 output.append(f"WSTimeUTC {ws_utc.hour:02d}:{ws_utc.minute:02d}")
-                log(config, LOG_MED, f"Calculated UTC time: {ws_utc.year:04d}-{ws_utc.month:02d}-{ws_utc.day:02d} {ws_utc.hour:02d}:{ws_utc.minute:02d}")
+                log(config, LOG_MED, f"Station UTC time: {ws_utc.year:04d}-{ws_utc.month:02d}-{ws_utc.day:02d} {ws_utc.hour:02d}:{ws_utc.minute:02d}")
             except Exception as e:
-                log(config, LOG_MIN, f"ERROR calculating UTC time: {e}")
-                print(f"Warning: Could not calculate UTC time: {e}", file=sys.stderr)
+                log(config, LOG_MIN, f"ERROR reading station UTC time: {e}")
+                print(f"Warning: Could not read station UTC time: {e}", file=sys.stderr)
+            
+            # Station timezone offset and calculated UTC (for verification in verbose mode)
+            if config.log_level >= LOG_MAX:
+                # Calculate timezone offset from station
+                log(config, LOG_MAX, "Calculating timezone offset from station times")
+                try:
+                    station_tz = ws.ws_timezone_offset_from_station()
+                    output.append(f"StationTZ {station_tz:.1f}")
+                    log(config, LOG_MAX, f"Station timezone offset: {station_tz:.1f}")
+                except Exception as e:
+                    log(config, LOG_MAX, f"ERROR calculating station TZ: {e}")
+                
+                # Calculate UTC from local + config timezone
+                log(config, LOG_MAX, "Calculating UTC from local time + config timezone offset")
+                try:
+                    ws_utc_calc = ws.ws_time_utc_calculated(config.timezone)
+                    output.append(f"WSDateUTCCalc {ws_utc_calc.year:04d}-{ws_utc_calc.month:02d}-{ws_utc_calc.day:02d}")
+                    output.append(f"WSTimeUTCCalc {ws_utc_calc.hour:02d}:{ws_utc_calc.minute:02d}")
+                    output.append(f"ConfigTZ {config.timezone:.1f}")
+                    log(config, LOG_MAX, f"Calculated UTC time: {ws_utc_calc.year:04d}-{ws_utc_calc.month:02d}-{ws_utc_calc.day:02d} {ws_utc_calc.hour:02d}:{ws_utc_calc.minute:02d}")
+                except Exception as e:
+                    log(config, LOG_MAX, f"ERROR calculating UTC time: {e}")
             
             log(config, LOG_MIN, "Closing weather station")
             

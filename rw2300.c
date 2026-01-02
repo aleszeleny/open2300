@@ -3108,13 +3108,61 @@ void ws_time_local(WEATHERSTATION ws2300, struct timestamp *timestamp)
 
 
 /********************************************************************
- * ws_time_utc
+ * ws_time_utc_from_station
+ * Read UTC time directly from weather station memory
+ * 
+ * NOTE: This reads the station's UTC memory (0x200/0x207) which may
+ *       or may not be correctly synchronized. Use ws_time_utc_calculated()
+ *       for a more reliable UTC based on DCF77 local time + config offset.
+ * 
+ * Input:  Handle to weatherstation
+ *         
+ * Output: timestamp - pointer to timestamp structure to store result
+ * 
+ * Returns: Nothing (fills timestamp structure)
+ *
+ ********************************************************************/
+void ws_time_utc_from_station(WEATHERSTATION ws2300, struct timestamp *timestamp)
+{
+	unsigned char data[20];
+	unsigned char command[25];
+	int address;
+	int bytes;
+	
+	// Read UTC time (second, minute, hour) from 0x200
+	address = 0x200;
+	bytes = 3;
+	
+	if (read_safe(ws2300, address, bytes, data, command) != bytes)
+		read_error_exit();
+	
+	// Note: timestamp struct doesn't have 'second' field, so we skip data[0]
+	timestamp->minute = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	timestamp->hour = ((data[2] >> 4) * 10) + (data[2] & 0xF);
+	
+	// Read UTC date (day, month, year) from 0x207
+	address = 0x207;
+	bytes = 3;
+	
+	if (read_safe(ws2300, address, bytes, data, command) != bytes)
+		read_error_exit();
+	
+	timestamp->day = ((data[0] >> 4) * 10) + (data[0] & 0xF);
+	timestamp->month = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	timestamp->year = 2000 + ((data[2] >> 4) * 10) + (data[2] & 0xF);
+	
+	return;
+}
+
+
+/********************************************************************
+ * ws_time_utc_calculated
  * Calculate UTC time from local time using timezone offset
  * 
- * NOTE: The weather station's UTC memory (0x200/0x207) is often
- *       misconfigured or not properly maintained. This function
- *       calculates UTC from the DCF77-synchronized local time
- *       using the timezone offset from the config file.
+ * NOTE: This calculates UTC from the DCF77-synchronized local time
+ *       using the timezone offset from the config file. This is more
+ *       reliable than reading station UTC if the station's timezone
+ *       setting is incorrect.
  * 
  * Input:  Handle to weatherstation
  *         timezone_offset - hours relative to UTC (e.g., 1.0 for UTC+1)
@@ -3124,7 +3172,7 @@ void ws_time_local(WEATHERSTATION ws2300, struct timestamp *timestamp)
  * Returns: Nothing (fills timestamp structure)
  *
  ********************************************************************/
-void ws_time_utc(WEATHERSTATION ws2300, double timezone_offset, struct timestamp *timestamp)
+void ws_time_utc_calculated(WEATHERSTATION ws2300, double timezone_offset, struct timestamp *timestamp)
 {
 	struct timestamp local_time;
 	int utc_hour;
@@ -3197,5 +3245,51 @@ void ws_time_utc(WEATHERSTATION ws2300, double timezone_offset, struct timestamp
 	timestamp->year = utc_year;
 	
 	return;
+}
+
+
+/********************************************************************
+ * ws_timezone_offset_from_station
+ * Calculate timezone offset by comparing station's local and UTC times
+ * 
+ * NOTE: This calculates the timezone offset based on the difference
+ *       between the station's local time and UTC time. Returns the
+ *       offset in hours (e.g., 1.0 for UTC+1).
+ * 
+ * Input:  Handle to weatherstation
+ *         
+ * Returns: Timezone offset in hours (positive for east of UTC)
+ *
+ ********************************************************************/
+double ws_timezone_offset_from_station(WEATHERSTATION ws2300)
+{
+	struct timestamp local_time, utc_time;
+	int hour_diff;
+	
+	// Read both local and UTC times
+	ws_time_local(ws2300, &local_time);
+	ws_time_utc_from_station(ws2300, &utc_time);
+	
+	// Calculate hour difference (local - UTC)
+	hour_diff = local_time.hour - utc_time.hour;
+	
+	// Handle day boundary crossings
+	if (local_time.day != utc_time.day || local_time.month != utc_time.month || local_time.year != utc_time.year) {
+		// Dates differ, need to handle carefully
+		if (local_time.day > utc_time.day || 
+		    (local_time.day == 1 && utc_time.day > 20)) {  // Month rollover
+			// Local is ahead (next day)
+			if (hour_diff < 0) {
+				hour_diff += 24;
+			}
+		} else {
+			// UTC is ahead (next day) - unusual but possible
+			if (hour_diff > 0) {
+				hour_diff -= 24;
+			}
+		}
+	}
+	
+	return (double)hour_diff;
 }
 
