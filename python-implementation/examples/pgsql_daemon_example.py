@@ -15,6 +15,7 @@ Features:
 
 import sys
 import time
+import argparse
 from datetime import datetime
 
 # Add parent directory to path if running from examples directory
@@ -183,13 +184,54 @@ def main():
         print("Install it with: pip install psycopg2-binary", file=sys.stderr)
         sys.exit(1)
     
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description='PostgreSQL weather data logger daemon',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s                    # Use interval from config file (default: 300 seconds)
+  %(prog)s -i 60              # Log every 60 seconds
+  %(prog)s --interval 600     # Log every 10 minutes
+  
+Configuration:
+  Set PGSQL_DAEMON_INTERVAL in open2300.conf to set default interval (in seconds).
+  Command-line parameter overrides config file value.
+        """
+    )
+    parser.add_argument(
+        '-i', '--interval',
+        type=int,
+        metavar='SECONDS',
+        help='Logging interval in seconds (overrides config file)'
+    )
+    parser.add_argument(
+        '-c', '--config',
+        type=str,
+        metavar='FILE',
+        help='Path to configuration file (default: search standard locations)'
+    )
+    
+    args = parser.parse_args()
+    
     # Load configuration
-    config = Config()
+    config = Config(args.config)
     
     if not config.pgsql_connect:
         print("Error: PostgreSQL not configured in open2300.conf")
         print("Add PGSQL_CONNECT to your config file")
         sys.exit(1)
+    
+    # Determine logging interval (command-line overrides config)
+    if args.interval is not None:
+        interval = args.interval
+        if interval < 1:
+            print("Error: Interval must be at least 1 second", file=sys.stderr)
+            sys.exit(1)
+        print(f"Using command-line interval: {interval} seconds")
+    else:
+        interval = config.pgsql_daemon_interval
+        print(f"Using config file interval: {interval} seconds (from PGSQL_DAEMON_INTERVAL)")
     
     # Create persistent logger with PREPARED STATEMENT
     logger = PersistentPostgreSQLLogger(
@@ -201,7 +243,7 @@ def main():
     
     print(f"PostgreSQL logger started - logging to table '{config.pgsql_table}'")
     print("Using PREPARED STATEMENTS for optimal performance")
-    print("Logging ALL 15 weather measurements every 5 minutes")
+    print(f"Logging ALL 15 weather measurements every {interval} seconds ({interval/60:.1f} minutes)")
     print("Fields: temp, dewpoint, humidity, wind (speed/dir/chill), rain (1h/24h/total), pressure, forecast")
     print("Press Ctrl+C to stop.")
     print()
@@ -279,8 +321,8 @@ def main():
                 traceback.print_exc()
                 # Continue anyway - will retry on next iteration
             
-            # Wait 5 minutes
-            time.sleep(300)
+            # Wait for configured interval
+            time.sleep(interval)
             
     except KeyboardInterrupt:
         print("\nStopping logger...")

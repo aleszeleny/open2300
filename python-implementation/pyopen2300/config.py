@@ -69,6 +69,7 @@ class Config:
         self.pgsql_connect = ""
         self.pgsql_table = "weather"
         self.pgsql_station = "open2300"
+        self.pgsql_daemon_interval = 300  # Default: 5 minutes (in seconds)
         
         # Load configuration from file
         if config_path:
@@ -177,4 +178,12 @@ class Config:
         
         elif key == "PGSQL_STATION":
             self.pgsql_station = value
+        
+        elif key == "PGSQL_DAEMON_INTERVAL":
+            try:
+                self.pgsql_daemon_interval = int(value)
+                if self.pgsql_daemon_interval < 1:
+                    self.pgsql_daemon_interval = 300  # Minimum 1 second, default to 5 min if invalid
+            except ValueError:
+                self.pgsql_daemon_interval = 300  # Default if invalid value
 

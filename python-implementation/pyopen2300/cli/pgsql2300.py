@@ -252,9 +252,9 @@ def main():
             print("LOG: READ LOCAL DATE AND TIME FROM WEATHER STATION", file=sys.stderr)
             ws_datetime_local = ws.ws_time_local()
             
-            # CALCULATE UTC DATE AND TIME FROM LOCAL TIME AND TIMEZONE OFFSET
-            print("LOG: CALCULATE UTC FROM LOCAL TIME AND TIMEZONE OFFSET", file=sys.stderr)
-            ws_datetime_utc = ws.ws_time_utc(config.timezone)
+            # READ UTC DATE AND TIME FROM WEATHER STATION
+            print("LOG: READ UTC FROM WEATHER STATION", file=sys.stderr)
+            ws_datetime_utc = ws.ws_time_utc_from_station()
             
             print("LOG: Closing weather station", file=sys.stderr)
         
