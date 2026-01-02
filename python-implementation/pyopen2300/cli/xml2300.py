@@ -136,6 +136,24 @@ def main():
             except:
                 pass
             
+            # Connection Type
+            try:
+                conn_type = ws.ws_connection_type()
+                if conn_type == 0x0:
+                    conn_str = "Cable"
+                elif conn_type == 0x3:
+                    conn_str = "Lost"
+                elif conn_type == 0xF:
+                    conn_str = "Wireless"
+                elif conn_type == -1:
+                    conn_str = "Error"
+                else:
+                    conn_str = f"Unknown(0x{conn_type:02X})"
+                conn_elem = SubElement(root, 'connection_type')
+                conn_elem.text = conn_str
+            except Exception as e:
+                print(f"Warning: Could not read connection type: {e}", file=sys.stderr)
+            
             # Write to file
             xml_string = prettify_xml(root)
             with open(xmlfile, 'w') as f:

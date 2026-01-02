@@ -741,6 +741,48 @@ class WeatherStation:
         
         return hours_diff
     
+    def ws_dcf77_sync_status(self, timezone_offset: float) -> int:
+        """
+        Read DCF77 synchronization status from station register
+        
+        NOTE: Address 0x020 contains alarm active flags, with bit 2 marked
+              as "Time?" in the memory map. This bit appears to indicate
+              DCF77 synchronization status based on the station's display icon.
+        
+        Args:
+            timezone_offset: Hours relative to UTC (unused, kept for API compatibility)
+        
+        Returns:
+            1 if synced (bit 2 set), 0 if not synced (bit 2 clear), -1 if error
+        """
+        # Read status register at address 0x020
+        data = self.read_safe(0x020, 1)
+        if data is None:
+            return -1  # Error reading
+        
+        # Check bit 2 (Time? bit) - this appears to indicate DCF77 sync status
+        # Bit 2 = 1 means synced, Bit 2 = 0 means not synced
+        sync_bit = (data[0] >> 2) & 0x01
+        
+        return sync_bit
+    
+    def ws_connection_type(self) -> int:
+        """
+        Read connection type from weather station
+        
+        Address: 0x54D
+        Values: 0x0 = Cable, 0x3 = Lost, 0xF = Wireless
+        
+        Returns:
+            Connection type (0=Cable, 3=Lost, 15=Wireless), -1 if error
+        """
+        # Read connection type register at address 0x54D
+        data = self.read_safe(0x54D, 1)
+        if data is None:
+            return -1  # Error reading
+        
+        return int(data[0])
+    
     def temperature_indoor_minmax(self, temperature_conv: int = CELSIUS) -> Tuple[float, float, Timestamp, Timestamp]:
         """
         Read indoor temperature min/max with timestamps
