@@ -742,30 +742,30 @@ class WeatherStation:
         
         return hours_diff
     
-    def ws_dcf77_sync_status(self, timezone_offset: float) -> int:
-        """
-        Read DCF77 synchronization status from station register
+    # def ws_dcf77_sync_status(self, timezone_offset: float) -> int:
+    #     """
+    #     Read DCF77 synchronization status from station register
         
-        NOTE: Address 0x020 contains alarm active flags, with bit 2 marked
-              as "Time?" in the memory map. This bit appears to indicate
-              DCF77 synchronization status based on the station's display icon.
+    #     NOTE: Address 0x020 contains alarm active flags, with bit 2 marked
+    #           as "Time?" in the memory map. This bit appears to indicate
+    #           DCF77 synchronization status based on the station's display icon.
         
-        Args:
-            timezone_offset: Hours relative to UTC (unused, kept for API compatibility)
+    #     Args:
+    #         timezone_offset: Hours relative to UTC (unused, kept for API compatibility)
         
-        Returns:
-            1 if synced (bit 2 set), 0 if not synced (bit 2 clear), -1 if error
-        """
-        # Read status register at address 0x020
-        data = self.read_safe(0x020, 1)
-        if data is None:
-            return -1  # Error reading
+    #     Returns:
+    #         1 if synced (bit 2 set), 0 if not synced (bit 2 clear), -1 if error
+    #     """
+    #     # Read status register at address 0x020
+    #     data = self.read_safe(0x113, 1)
+    #     if data is None:
+    #         return -1  # Error reading
         
-        # Check bit 2 (Time? bit) - this appears to indicate DCF77 sync status
-        # Bit 2 = 1 means synced, Bit 2 = 0 means not synced
-        sync_bit = (data[0] >> 2) & 0x01
+    #     # Check bit 2 (Time? bit) - this appears to indicate DCF77 sync status
+    #     # Bit 2 = 1 means synced, Bit 2 = 0 means not synced
+    #     sync_bit = (data[0] >> 2) & 0x01
         
-        return sync_bit
+    #     return sync_bit
     
     def ws_connection_type(self) -> int:
         """
