@@ -198,19 +198,20 @@ class WeatherStation:
                 debug_print(f"reset_06: Error flushing buffer: {e}")
                 pass
             
-            # Small delay to let the flush complete and line stabilize
-            time.sleep(0.001)  # 1ms delay
+            # # Small delay to let the flush complete and line stabilize
+            # time.sleep(0.001)  # 1ms delay
             
             debug_print(f"reset_06: Sending command 0x06")
             self.device.write(command)
             
-            # Small delay to let the device process the command
-            time.sleep(0.01)  # 10ms delay (enough for 2-3 bytes at 2400 baud)
+            # # Small delay to let the device process the command
+            # time.sleep(0.01)  # 10ms delay (enough for 2-3 bytes at 2400 baud)
             debug_print("reset_06: Waiting for response...")
             
             # Read responses until we get a 2 OR timeout
             # Keep reading as long as data comes back
             # The station may send 0x00 first, then 0x02
+            # This matches the C implementation which reads until no more data
             read_count = 0
             got_two = False
             while True:
@@ -239,7 +240,7 @@ class WeatherStation:
             
             debug_print(f"reset_06: No 0x02 received in {read_count} bytes")
             
-            # Sleep longer for each retry
+            # Sleep longer for each retry (matches C: usleep(50000 * i) = 0.05s * i)
             if i > 0:
                 sleep_time = 0.05 * i
                 debug_print(f"reset_06: Sleeping {sleep_time:.3f}s before retry")
