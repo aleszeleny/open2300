@@ -44,13 +44,13 @@ class SerialDevice:
                 bytesize=serial.EIGHTBITS,
                 parity=serial.PARITY_NONE,
                 stopbits=serial.STOPBITS_ONE,
-                timeout=1.0,
+                timeout=0.1,  # Reduced from 1.0s to 0.1s for faster reads (matches C VTIME=1)
                 xonxoff=False,
                 rtscts=False,
                 dsrdtr=False
             )
             debug_print(f"Serial port opened successfully: {self.device}")
-            debug_print(f"Baudrate: {BAUDRATE}, Timeout: 1.0s")
+            debug_print(f"Baudrate: {BAUDRATE}, Timeout: {self.ser.timeout}s")
             
             # Set DTR low and RTS high (required for WS2300)
             # This matches the C implementation in linux2300.c
