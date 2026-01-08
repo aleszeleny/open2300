@@ -350,20 +350,20 @@ def main():
                 except Exception as e:
                     log(config, LOG_MAX, f"ERROR calculating UTC time: {e}")
                 
-                # Check DCF77 sync status
-                log(config, LOG_MAX, "Checking DCF77 synchronization status")
-                try:
-                    sync_status = ws.ws_dcf77_sync_status(config.timezone)
-                    if sync_status == 1:
-                        sync_str = "Synced"
-                    elif sync_status == 0:
-                        sync_str = "NotSynced"
-                    else:
-                        sync_str = "Unknown"
-                    output.append(f"DCF77Sync {sync_str}")
-                    log(config, LOG_MAX, f"DCF77 sync status: {sync_str}")
-                except Exception as e:
-                    log(config, LOG_MAX, f"ERROR checking DCF77 sync status: {e}")
+                # # Check DCF77 sync status
+                # log(config, LOG_MAX, "Checking DCF77 synchronization status")
+                # try:
+                #     sync_status = ws.ws_dcf77_sync_status(config.timezone)
+                #     if sync_status == 1:
+                #         sync_str = "Synced"
+                #     elif sync_status == 0:
+                #         sync_str = "NotSynced"
+                #     else:
+                #         sync_str = "Unknown"
+                #     output.append(f"DCF77Sync {sync_str}")
+                #     log(config, LOG_MAX, f"DCF77 sync status: {sync_str}")
+                # except Exception as e:
+                #     log(config, LOG_MAX, f"ERROR checking DCF77 sync status: {e}")
                 
                 # Read connection type
                 log(config, LOG_MAX, "Reading connection type")
