@@ -97,7 +97,6 @@ int main(int argc, char *argv[])
 	int tempint;
 //	char tendency[15];
 //	char forecast[15];
-	struct timestamp station_time;
 	struct config_type config;
 //	char query[4096];
 	char *sql_query;
@@ -170,9 +169,11 @@ int main(int argc, char *argv[])
 //		time_max.year, time_max.month, time_max.day, time_max.hour, time_max.minute);
 //	strcat(logvalues, tempstring);
 
-	/* READ STATION UTC TIME */
+	/* READ STATION LOCAL AND UTC TIME */
+	LOG(LOG_MAX, "READ STATION LOCAL TIME.");
+	ws_time_local(ws2300, &ws_data.ws_datetime_local);
 	LOG(LOG_MAX, "READ STATION UTC TIME.");
-	ws_time(ws2300, &station_time);
+	ws_time_utc_from_station(ws2300, &ws_data.ws_datetime_utc);
 
 	/* READ WIND SPEED AND DIRECTION, THEN RESET WIND MIN/MAX */
 	ws_data.wind_speed = wind_all_reset(ws2300,
@@ -247,6 +248,8 @@ int main(int argc, char *argv[])
 		"   , wind_speed_min_datetime\n"
 		"   , wind_speed_max_datetime\n"
 		"   , station_datetime\n"
+		"   , ws_datetime_local\n"
+		"   , ws_datetime_utc\n"
 		"   , wind_speed\n"
 		"   , wind_angle_current\n"
 		"   , wind_angle_previous_1\n"
@@ -275,6 +278,8 @@ int main(int argc, char *argv[])
 		"   , make_timestamp(%d, %d, %d, %d, %d, 0)\n"
 		"   , make_timestamp(%d, %d, %d, %d, %d, 0)\n"
 		"   , make_timestamp(%d, %d, %d, %d, %d, %d)\n"
+		"   , make_timestamp(%d, %d, %d, %d, %d, %d)\n"
+		"   , make_timestamp(%d, %d, %d, %d, %d, %d)\n"
 		"   , %.1f\n"
 		"   , %.1f\n"
 		"   , %.1f\n"
@@ -302,8 +307,15 @@ int main(int argc, char *argv[])
       ws_data.wind_speed_max_datetime.year, ws_data.wind_speed_max_datetime.month,
       ws_data.wind_speed_max_datetime.day, ws_data.wind_speed_max_datetime.hour,
       ws_data.wind_speed_max_datetime.minute,
-      station_time.year, station_time.month, station_time.day, station_time.hour,
-      station_time.minute, station_time.second,
+      ws_data.ws_datetime_utc.year, ws_data.ws_datetime_utc.month,
+      ws_data.ws_datetime_utc.day, ws_data.ws_datetime_utc.hour,
+      ws_data.ws_datetime_utc.minute, ws_data.ws_datetime_utc.second,
+      ws_data.ws_datetime_local.year, ws_data.ws_datetime_local.month,
+      ws_data.ws_datetime_local.day, ws_data.ws_datetime_local.hour,
+      ws_data.ws_datetime_local.minute, ws_data.ws_datetime_local.second,
+      ws_data.ws_datetime_utc.year, ws_data.ws_datetime_utc.month,
+      ws_data.ws_datetime_utc.day, ws_data.ws_datetime_utc.hour,
+      ws_data.ws_datetime_utc.minute, ws_data.ws_datetime_utc.second,
       ws_data.wind_speed, ws_data.wind_angle[0], ws_data.wind_angle[1],
       ws_data.wind_angle[2], ws_data.wind_angle[3], ws_data.wind_angle[4],
       ws_data.wind_angle[5], ws_data.wind_direction, ws_data.wind_chill,

@@ -49,6 +49,8 @@ CREATE TABLE open2300.weather (
   tendency varchar(7),
   forecast varchar(6),
   station_datetime timestamp,
+  ws_datetime_local timestamp,
+  ws_datetime_utc timestamp,
   pgsql2300_version varchar(64),     -- SW version ( RCS tag: Revision from pgsql2300.c )
   src_name varchar(64),  -- identify source historical table name from which data were imported
   src_rec_id bigint,  -- identify source data from historical tables
@@ -59,5 +61,7 @@ alter table open2300.weather owner to open2300;
 
 create index rec_datetime_idx on open2300.weather(rec_datetime);
 create index station_datetime_idx on open2300.weather(station_datetime);
+create index ws_datetime_local_idx on open2300.weather(ws_datetime_local);
+create index ws_datetime_utc_idx on open2300.weather(ws_datetime_utc);
 
 grant select on open2300.weather to ws2300;

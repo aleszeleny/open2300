@@ -20,5 +20,9 @@ ALTER TABLE open2300.weather RENAME COLUMN wind_angle4 TO wind_angle_previous_4;
 ALTER TABLE open2300.weather RENAME COLUMN wind_angle5 TO wind_angle_previous_5;
 ALTER TABLE open2300.weather RENAME COLUMN ws_datetime TO station_datetime;
 ALTER INDEX open2300.ws_datetime_idx RENAME TO station_datetime_idx;
+ALTER TABLE open2300.weather ADD COLUMN ws_datetime_local timestamp;
+ALTER TABLE open2300.weather ADD COLUMN ws_datetime_utc timestamp;
+CREATE INDEX ws_datetime_local_idx ON open2300.weather(ws_datetime_local);
+CREATE INDEX ws_datetime_utc_idx ON open2300.weather(ws_datetime_utc);
 
 COMMIT;

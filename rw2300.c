@@ -1030,10 +1030,10 @@ double wind_minmax(WEATHERSTATION ws2300,
 
 
 /********************************************************************/
-/* ws_time
- * Read current UTC date and time from meteostation
+/* ws_time_utc_from_station
+ * Read current UTC date and time from the station's UTC registers.
  ********************************************************************/
-int ws_time(WEATHERSTATION ws2300, struct timestamp *current_time)
+int ws_time_utc_from_station(WEATHERSTATION ws2300, struct timestamp *current_time)
 {
 	unsigned char data[20];
 	unsigned char command[25];
@@ -1056,6 +1056,47 @@ int ws_time(WEATHERSTATION ws2300, struct timestamp *current_time)
 	current_time->year = 2000 + ((data[2] >> 4) * 10) + (data[2] & 0xF);
 
 	return 1;
+}
+
+
+/********************************************************************/
+/* ws_time_local
+ * Read current local date and time from the station's DCF77-synchronized
+ * local-time registers.
+ ********************************************************************/
+int ws_time_local(WEATHERSTATION ws2300, struct timestamp *current_time)
+{
+	unsigned char data[20];
+	unsigned char command[25];
+	int address = 0x239;
+	int number = 3;
+
+	if (read_safe(ws2300, address, number, data, command) != number)
+		read_error_exit();
+
+	current_time->second = ((data[0] >> 4) * 10) + (data[0] & 0xF);
+	current_time->minute = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	current_time->hour = ((data[2] >> 4) * 10) + (data[2] & 0xF);
+
+	address = 0x240;
+	if (read_safe(ws2300, address, number, data, command) != number)
+		read_error_exit();
+
+	current_time->day = ((data[0] >> 4) * 10) + (data[0] & 0xF);
+	current_time->month = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	current_time->year = 2000 + ((data[2] >> 4) * 10) + (data[2] & 0xF);
+
+	return 1;
+}
+
+
+/********************************************************************/
+/* ws_time
+ * Backward-compatible name for reading the station's UTC time.
+ ********************************************************************/
+int ws_time(WEATHERSTATION ws2300, struct timestamp *current_time)
+{
+	return ws_time_utc_from_station(ws2300, current_time);
 }
 
 

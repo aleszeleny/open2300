@@ -127,6 +127,8 @@ struct weather_dataset
 	double rel_pressure;
 	char   tendency[15];
 	char   forecast[15];
+	struct timestamp ws_datetime_local;
+	struct timestamp ws_datetime_utc;
 };
 
 
@@ -212,6 +214,10 @@ int wind_reset(WEATHERSTATION ws2300, char minmax);
 int wind_reset_fast(WEATHERSTATION ws2300, char minmax, int current_wind);
 
 int ws_time(WEATHERSTATION ws2300, struct timestamp *current_time);
+
+int ws_time_local(WEATHERSTATION ws2300, struct timestamp *current_time);
+
+int ws_time_utc_from_station(WEATHERSTATION ws2300, struct timestamp *current_time);
 
 double windchill(WEATHERSTATION ws2300, int temperature_conv);
 
