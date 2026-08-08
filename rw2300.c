@@ -1030,6 +1030,36 @@ double wind_minmax(WEATHERSTATION ws2300,
 
 
 /********************************************************************/
+/* ws_time
+ * Read current UTC date and time from meteostation
+ ********************************************************************/
+int ws_time(WEATHERSTATION ws2300, struct timestamp *current_time)
+{
+	unsigned char data[20];
+	unsigned char command[25];
+	int address = 0x200;
+	int number = 3;
+
+	if (read_safe(ws2300, address, number, data, command) != number)
+		read_error_exit();
+
+	current_time->second = ((data[0] >> 4) * 10) + (data[0] & 0xF);
+	current_time->minute = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	current_time->hour = ((data[2] >> 4) * 10) + (data[2] & 0xF);
+
+	address = 0x207;
+	if (read_safe(ws2300, address, number, data, command) != number)
+		read_error_exit();
+
+	current_time->day = ((data[0] >> 4) * 10) + (data[0] & 0xF);
+	current_time->month = ((data[1] >> 4) * 10) + (data[1] & 0xF);
+	current_time->year = 2000 + ((data[2] >> 4) * 10) + (data[2] & 0xF);
+
+	return 1;
+}
+
+
+/********************************************************************/
 /* wind_reset
  * Reset min/max wind with timestamps
  * 
@@ -1132,6 +1162,118 @@ int wind_reset(WEATHERSTATION ws2300, char minmax)
 	}
 
 	return 1;
+}
+
+
+/********************************************************************/
+/* wind_reset_fast
+ * Reset wind min/max using the current wind value already read by the
+ * caller, avoiding an additional serial read of the wind registers.
+ ********************************************************************/
+int wind_reset_fast(WEATHERSTATION ws2300, char minmax, int current_wind)
+{
+	unsigned char data_read[20];
+	unsigned char data_value[20];
+	unsigned char data_time[20];
+	unsigned char command[25];
+	int address;
+	int number;
+
+	data_value[0] = current_wind & 0xF;
+	data_value[1] = (current_wind >> 4) & 0xF;
+	data_value[2] = (current_wind >> 8) & 0xF;
+	data_value[3] = (current_wind >> 12) & 0xF;
+
+	address = 0x23B;
+	number = 6;
+	if (read_safe(ws2300, address, number, data_read, command) != number)
+		read_error_exit();
+
+	data_time[0] = data_read[0] & 0xF;
+	data_time[1] = data_read[0] >> 4;
+	data_time[2] = data_read[1] & 0xF;
+	data_time[3] = data_read[1] >> 4;
+	data_time[4] = data_read[2] >> 4;
+	data_time[5] = data_read[3] & 0xF;
+	data_time[6] = data_read[3] >> 4;
+	data_time[7] = data_read[4] & 0xF;
+	data_time[8] = data_read[4] >> 4;
+	data_time[9] = data_read[5] & 0xF;
+
+	if (minmax & RESET_MIN)
+	{
+		address = 0x4EE;
+		number = 4;
+		if (write_safe(ws2300, address, number, WRITENIB, data_value, command) != number)
+			write_error_exit();
+
+		address = 0x4F8;
+		number = 10;
+		if (write_safe(ws2300, address, number, WRITENIB, data_time, command) != number)
+			write_error_exit();
+	}
+
+	if (minmax & RESET_MAX)
+	{
+		address = 0x4F4;
+		number = 4;
+		if (write_safe(ws2300, address, number, WRITENIB, data_value, command) != number)
+			write_error_exit();
+
+		address = 0x502;
+		number = 10;
+		if (write_safe(ws2300, address, number, WRITENIB, data_time, command) != number)
+			write_error_exit();
+	}
+
+	return 1;
+}
+
+
+/********************************************************************/
+/* wind_all_reset
+ * Read the complete wind packet and reset min/max using that packet.
+ ********************************************************************/
+double wind_all_reset(WEATHERSTATION ws2300,
+                      double wind_speed_conv_factor,
+                      int *winddir_index,
+                      double *winddir,
+                      char minmax)
+{
+	unsigned char data[20];
+	unsigned char command[25];
+	int i;
+	int address = 0x527;
+	int bytes = 6;
+	int current_wind;
+
+	for (i = 0; i < MAXWINDRETRIES; i++)
+	{
+		if (read_safe(ws2300, address, bytes, data, command) != bytes)
+			read_error_exit();
+
+		if ((data[0] != 0x00) ||
+		    ((data[1] == 0xFF) && (((data[2] & 0xF) == 0) || ((data[2] & 0xF) == 1))))
+		{
+			sleep_long(10);
+			continue;
+		}
+		break;
+	}
+
+	*winddir_index = data[2] >> 4;
+	winddir[0] = (data[2] >> 4) * 22.5;
+	winddir[1] = (data[3] & 0xF) * 22.5;
+	winddir[2] = (data[3] >> 4) * 22.5;
+	winddir[3] = (data[4] & 0xF) * 22.5;
+	winddir[4] = (data[4] >> 4) * 22.5;
+	winddir[5] = (data[5] & 0xF) * 22.5;
+
+	current_wind = (((data[2] & 0xF) << 8) + data[1]) * 36;
+	if (wind_reset_fast(ws2300, minmax, current_wind) != 1)
+		write_error_exit();
+
+	return (((data[2] & 0xF) << 8) + data[1]) / 10.0 * wind_speed_conv_factor;
 }
 
 
@@ -3061,4 +3203,3 @@ int write_safe(WEATHERSTATION ws2300, int address, int number,
 
 	return number;
 }
-

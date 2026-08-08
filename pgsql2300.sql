@@ -24,18 +24,18 @@ grant usage on schema open2300 to ws2300;
 CREATE TABLE open2300.weather (
   rec_id bigserial, -- record ID
   rec_datetime timestamp with time zone  NOT NULL default now(),   -- record DateTime
-  temp_in numeric(4,1),
-  temp_out numeric(4,1),
+  temperature_indoor numeric(4,1),
+  temperature_outdoor numeric(4,1),
   dewpoint numeric(4,1),
-  rel_hum_in smallint,
-  rel_hum_out smallint,
+  humidity_indoor smallint,
+  humidity_outdoor smallint,
   wind_speed numeric(3,1),
-  wind_angle0 numeric(4,1),   -- current wind angle
-  wind_angle1 numeric(4,1),   -- last five wind angle values
-  wind_angle2 numeric(4,1),
-  wind_angle3 numeric(4,1),
-  wind_angle4 numeric(4,1),
-  wind_angle5 numeric(4,1),
+  wind_angle_current numeric(4,1),
+  wind_angle_previous_1 numeric(4,1),
+  wind_angle_previous_2 numeric(4,1),
+  wind_angle_previous_3 numeric(4,1),
+  wind_angle_previous_4 numeric(4,1),
+  wind_angle_previous_5 numeric(4,1),
   wind_direction char(3),
   wind_speed_min numeric(3,1),
   wind_speed_max numeric(3,1),
@@ -48,7 +48,7 @@ CREATE TABLE open2300.weather (
   rel_pressure numeric(5,1),
   tendency varchar(7),
   forecast varchar(6),
-  ws_datetime timestamp,
+  station_datetime timestamp,
   pgsql2300_version varchar(64),     -- SW version ( RCS tag: Revision from pgsql2300.c )
   src_name varchar(64),  -- identify source historical table name from which data were imported
   src_rec_id bigint,  -- identify source data from historical tables
@@ -58,6 +58,6 @@ CREATE TABLE open2300.weather (
 alter table open2300.weather owner to open2300;
 
 create index rec_datetime_idx on open2300.weather(rec_datetime);
-create index ws_datetime_idx on open2300.weather(ws_datetime);
+create index station_datetime_idx on open2300.weather(station_datetime);
 
 grant select on open2300.weather to ws2300;

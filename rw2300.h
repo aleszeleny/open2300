@@ -98,6 +98,7 @@ struct config_type
 
 struct timestamp
 {
+	int second;
 	int minute;
 	int hour;
 	int day;
@@ -193,6 +194,12 @@ double wind_all(WEATHERSTATION ws2300,
                 int *winddir_index,
                 double *winddir);
 
+double wind_all_reset(WEATHERSTATION ws2300,
+                      double wind_speed_conv_factor,
+                      int *winddir_index,
+                      double *winddir,
+                      char minmax);
+
 double wind_minmax(WEATHERSTATION ws2300,
                  double wind_speed_conv_factor,
                  double *wind_min,
@@ -201,6 +208,10 @@ double wind_minmax(WEATHERSTATION ws2300,
                  struct timestamp *time_max);
                  
 int wind_reset(WEATHERSTATION ws2300, char minmax);
+
+int wind_reset_fast(WEATHERSTATION ws2300, char minmax, int current_wind);
+
+int ws_time(WEATHERSTATION ws2300, struct timestamp *current_time);
 
 double windchill(WEATHERSTATION ws2300, int temperature_conv);
 
