@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
 		"   , %.1f\n"
 		"   , %.1f\n"
 		"   , make_timestamp(%d, %d, %d, %d, %d, 0)\n"
-		"   , make_timestamp(%d, %d, %d, %d, %d, %d)\n"
+		"   , make_timestamp(%d, %d, %d, %d, %d, 0)\n"
 		"   , make_timestamp(%d, %d, %d, %d, %d, %d)\n"
 		"   , %.1f\n"
 		"   , %.1f\n"
