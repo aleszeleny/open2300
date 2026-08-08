@@ -29,6 +29,7 @@ setup(
     
     install_requires=[
         'pyserial>=3.4',  # Compatible with older systems including RPi2
+        'psycopg2-binary>=2.9.0',
     ],
     
     extras_require={
@@ -76,4 +77,3 @@ setup(
     
     keywords='weather station ws2300 lacrosse',
 )
-
