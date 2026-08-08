@@ -79,10 +79,10 @@ char * fmt_alloc(const char *fmt, ...)
  *
  ***********************************************************************/
 	static char const rcsid[] =
-		"Id: pgsql2300.c 1.8 2022/08/28 20:22:26";
+		"Id: pgsql2300.c 1.9 2022/08/28 20:22:26";
 
 	static char const rcsver[] =
-		"Revision: 1.8";
+		"Revision: 1.9";
 
 int main(int argc, char *argv[])
 {
