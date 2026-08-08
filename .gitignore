@@ -1,4 +1,5 @@
 *.o
+*.so
 bin2300
 cw2300
 dump2300
@@ -16,6 +17,7 @@ minmax2300
 mysql2300
 mysqlhistlog2300
 open2300
+open2300.conf
 sqlitelog2300
 wu2300
 xml2300

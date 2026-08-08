@@ -253,6 +253,8 @@ Write current data to PostgresSQL database: pgsql2300 config_filename
 It takes one parameter which is the config file name with path.
 If this parameter is omitted the program will look at the default paths.
 See the open2300.conf-dist file for info.
+For running pgsql2300 every minute with systemd on Raspberry Pi, see
+systemd/README.md.
 
 light2300
 Turn light off:    light2300 off config_filename

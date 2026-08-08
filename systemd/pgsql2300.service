@@ -1,0 +1,8 @@
+[Unit]
+Description=Log WS2300 weather data to PostgreSQL
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/src/open2300
+Environment=LD_LIBRARY_PATH=.
+ExecStart=/bin/sh -c 'exec ./pgsql2300 ./open2300.conf'

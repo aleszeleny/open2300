@@ -1,0 +1,11 @@
+[Unit]
+Description=Run WS2300 PostgreSQL logger every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
+Persistent=true
+Unit=pgsql2300.service
+
+[Install]
+WantedBy=timers.target

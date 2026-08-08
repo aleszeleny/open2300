@@ -79,10 +79,10 @@ char * fmt_alloc(const char *fmt, ...)
  *
  ***********************************************************************/
 	static char const rcsid[] =
-		"Id: pgsql2300.c 1.8 2022/08/28 20:22:26";
+		"Id: pgsql2300.c 1.9 2022/08/28 20:22:26";
 
 	static char const rcsver[] =
-		"Revision: 1.8";
+		"Revision: 1.9";
 
 int main(int argc, char *argv[])
 {
@@ -97,8 +97,6 @@ int main(int argc, char *argv[])
 	int tempint;
 //	char tendency[15];
 //	char forecast[15];
-	double tempfloat_min, tempfloat_max;
-	struct timestamp time_min, time_max;
 	struct config_type config;
 //	char query[4096];
 	char *sql_query;
@@ -152,8 +150,7 @@ int main(int argc, char *argv[])
 
 //  sprintf(logline,"%s\'%d\',", logline, ws_data.humidity_outdoor);
 
-	/* READ WIND SPEED MIN AND MAX */
-	/* Do this before resetting min & max wind speed. */
+	/* READ WIND SPEED MIN AND MAX BEFORE RESETTING THEM */
 	LOG(LOG_MAX, "READ WIND SPEED MIN AND MAX.");
 //	strcat(logfields, "wind_speed_min, wind_speed_max, ");
 	wind_minmax(ws2300, config.wind_speed_conv_factor,
@@ -172,13 +169,16 @@ int main(int argc, char *argv[])
 //		time_max.year, time_max.month, time_max.day, time_max.hour, time_max.minute);
 //	strcat(logvalues, tempstring);
 
+	/* READ STATION LOCAL AND UTC TIME */
+	LOG(LOG_MAX, "READ STATION LOCAL TIME.");
+	ws_time_local(ws2300, &ws_data.ws_datetime_local);
+	LOG(LOG_MAX, "READ STATION UTC TIME.");
+	ws_time_utc_from_station(ws2300, &ws_data.ws_datetime_utc);
 
-// add the speed reset see open2300_zalohy/zafod/open2300/pgsql2300.c
-
-	/* READ WIND SPEED AND DIRECTION aND WINDCHILL */
-
-  ws_data.wind_speed = wind_all(ws2300,
-      config.wind_speed_conv_factor, &tempint, ws_data.wind_angle);
+	/* READ WIND SPEED AND DIRECTION, THEN RESET WIND MIN/MAX */
+	ws_data.wind_speed = wind_all_reset(ws2300,
+		config.wind_speed_conv_factor, &tempint, ws_data.wind_angle,
+		RESET_MIN + RESET_MAX);
 
   ws_data.wind_direction = fmt_alloc("%s", directions[tempint]);
 
@@ -237,44 +237,90 @@ int main(int argc, char *argv[])
 
   sql_query = fmt_alloc(
         "INSERT INTO %s (\n"
-        "     temperature_indoor\n"
+		"     rec_datetime\n"
+		"   , temperature_indoor\n"
         "   , temperature_outdoor\n"
         "   , dewpoint\n"
         "   , humidity_indoor\n"
         "   , humidity_outdoor\n"
-        "   , wind_speed\n"
-        "   , wind_angle\n"
+		"   , wind_speed_min\n"
+		"   , wind_speed_max\n"
+		"   , wind_speed_min_datetime\n"
+		"   , wind_speed_max_datetime\n"
+		"   , station_datetime\n"
+		"   , ws_datetime_local\n"
+		"   , ws_datetime_utc\n"
+		"   , wind_speed\n"
+		"   , wind_angle_current\n"
+		"   , wind_angle_previous_1\n"
+		"   , wind_angle_previous_2\n"
+		"   , wind_angle_previous_3\n"
+		"   , wind_angle_previous_4\n"
+		"   , wind_angle_previous_5\n"
         "   , wind_direction\n"
         "   , wind_chill\n"
         "   , rain_1h\n"
-        "   , rain_24h\n"
-        "   , rain_total\n"
-        "   , tendency\n"
-        "   , forecast\n"
+		"   , rain_24h\n"
+		"   , rain_total\n"
+		"   , rel_pressure\n"
+		"   , tendency\n"
+		"   , forecast\n"
+		"   , pgsql2300_version\n"
         ") VALUES (\n"
-        "     %.1f\n"
+		"     now()\n"
+		"   , %.1f\n"
         "   , %.1f\n"
         "   , %.1f\n"
-        "   , %d\n"
-        "   , %d\n"
+		"   , %d\n"
+		"   , %d\n"
+		"   , %.1f\n"
+		"   , %.1f\n"
+		"   , make_timestamp(%d, %d, %d, %d, %d, 0)\n"
+		"   , make_timestamp(%d, %d, %d, %d, %d, 0)\n"
+		"   , make_timestamp(%d, %d, %d, %d, %d, %d)\n"
+		"   , make_timestamp(%d, %d, %d, %d, %d, %d)\n"
+		"   , make_timestamp(%d, %d, %d, %d, %d, %d)\n"
+		"   , %.1f\n"
+		"   , %.1f\n"
+		"   , %.1f\n"
+		"   , %.1f\n"
+		"   , %.1f\n"
+		"   , %.1f\n"
+		"   , %.1f\n"
+		"   , '%s'\n"
         "   , %.1f\n"
         "   , %.1f\n"
-        "   , '%s'\n"
         "   , %.1f\n"
-        "   , %.1f\n"
-        "   , %.1f\n"
-        "   , %.1f\n"
-        "   , '%s'\n"
-        "   , '%s'\n"
+		"   , %.1f\n"
+		"   , %.1f\n"
+		"   , '%s'\n"
+		"   , '%s'\n"
+		"   , '%s'\n"
         ")\n",
       config.pgsql_table,
       ws_data.temperature_indoor, ws_data.temperature_outdoor, ws_data.dewpoint,
-      ws_data.humidity_indoor, ws_data.humidity_outdoor, ws_data.wind_speed,
-      ws_data.wind_angle[0], ws_data.wind_direction, ws_data.wind_chill,
+      ws_data.humidity_indoor, ws_data.humidity_outdoor,
+      ws_data.wind_speed_min, ws_data.wind_speed_max,
+      ws_data.wind_speed_min_datetime.year, ws_data.wind_speed_min_datetime.month,
+      ws_data.wind_speed_min_datetime.day, ws_data.wind_speed_min_datetime.hour,
+      ws_data.wind_speed_min_datetime.minute,
+      ws_data.wind_speed_max_datetime.year, ws_data.wind_speed_max_datetime.month,
+      ws_data.wind_speed_max_datetime.day, ws_data.wind_speed_max_datetime.hour,
+      ws_data.wind_speed_max_datetime.minute,
+      ws_data.ws_datetime_utc.year, ws_data.ws_datetime_utc.month,
+      ws_data.ws_datetime_utc.day, ws_data.ws_datetime_utc.hour,
+      ws_data.ws_datetime_utc.minute, ws_data.ws_datetime_utc.second,
+      ws_data.ws_datetime_local.year, ws_data.ws_datetime_local.month,
+      ws_data.ws_datetime_local.day, ws_data.ws_datetime_local.hour,
+      ws_data.ws_datetime_local.minute, ws_data.ws_datetime_local.second,
+      ws_data.ws_datetime_utc.year, ws_data.ws_datetime_utc.month,
+      ws_data.ws_datetime_utc.day, ws_data.ws_datetime_utc.hour,
+      ws_data.ws_datetime_utc.minute, ws_data.ws_datetime_utc.second,
+      ws_data.wind_speed, ws_data.wind_angle[0], ws_data.wind_angle[1],
+      ws_data.wind_angle[2], ws_data.wind_angle[3], ws_data.wind_angle[4],
+      ws_data.wind_angle[5], ws_data.wind_direction, ws_data.wind_chill,
       ws_data.rain_1h, ws_data.rain_24h, ws_data.rain_total,
-      ws_data.tendency, ws_data.forecast);
-
-  printf("%s", sql_query);
+      ws_data.rel_pressure, ws_data.tendency, ws_data.forecast, rcsver);
 
   free(ws_data.wind_direction);
 
