@@ -1,8 +1,10 @@
 [Unit]
 Description=Log WS2300 weather data to PostgreSQL
+After=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=%h/src/open2300
-Environment=LD_LIBRARY_PATH=.
-ExecStart=/bin/sh -c 'exec ./pgsql2300 ./open2300.conf'
+User=@SERVICE_USER@
+ExecStart=@BINDIR@/pgsql2300 @CONFDIR@/open2300.conf
+TimeoutStartSec=40
+RuntimeMaxSec=40

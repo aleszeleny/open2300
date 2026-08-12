@@ -57,6 +57,24 @@ So the fast track steps again are
     
     make install
     
+On Raspberry Pi OS / Debian, run 'make install-rpi' instead of 'make install'.
+It installs the binaries to the same bindir as 'make install', but installs
+lib2300 to the arch-specific multiarch library directory (queried from
+dpkg-architecture) instead of $(prefix)/lib, and runs ldconfig afterwards.
+This works unchanged on both 32-bit (e.g. RPi2) and 64-bit (RPi3/4/5) systems.
+'make install-rpi' needs to run as root (e.g. via sudo) since ldconfig and
+writing to /usr/lib require it; 'make uninstall-rpi' is the matching removal
+target.
+
+To run pgsql2300 unattended once a minute under a dedicated, unprivileged
+system user (rather than manually or under your login), run
+'sudo make install-pgsql-service' after installing the binaries. It creates
+a 'weather' system user (in the 'dialout' group for serial/USB access),
+copies open2300-dist.conf to /etc/open2300/open2300.conf if not already
+present, and installs+enables a systemd service/timer pair with a 40 second
+run timeout. See systemd/README.md for details and 'make
+uninstall-pgsql-service' to remove it.
+
 To install under Windows either use the binaries or compile the sources using
 your favorite C compiler.
 The author has tested everything with the MinGW C-Compiler
