@@ -7,4 +7,3 @@ Type=oneshot
 User=@SERVICE_USER@
 ExecStart=@BINDIR@/pgsql2300 @CONFDIR@/open2300.conf
 TimeoutStartSec=40
-RuntimeMaxSec=40

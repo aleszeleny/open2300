@@ -119,23 +119,24 @@ install:
 	mkdir -p $(libdir)
 	$(INSTALL) $(LIB).$(LSUFFIX).$(VERSION) $(libdir)
 	ln -sf $(libdir)/$(LIB).$(LSUFFIX).$(VERSION) $(libdir)/$(LIB).$(LSUFFIX)
-	$(INSTALL) srv2300 $(bindir)
-	$(INSTALL) open2300 $(bindir)
-	$(INSTALL) dump2300 $(bindir)
-	$(INSTALL) log2300 $(bindir)
-	$(INSTALL) fetch2300 $(bindir)
-	$(INSTALL) wu2300 $(bindir)
-	$(INSTALL) cw2300 $(bindir)
-	$(INSTALL) histlog2300 $(bindir)
-	$(INSTALL) xml2300 $(bindir)
-	$(INSTALL) light2300 $(bindir)
-	$(INSTALL) interval2300 $(bindir)
-	$(INSTALL) minmax2300 $(bindir)
+	-$(INSTALL) srv2300 $(bindir)
+	-$(INSTALL) open2300 $(bindir)
+	-$(INSTALL) dump2300 $(bindir)
+	-$(INSTALL) log2300 $(bindir)
+	-$(INSTALL) fetch2300 $(bindir)
+	-$(INSTALL) wu2300 $(bindir)
+	-$(INSTALL) cw2300 $(bindir)
+	-$(INSTALL) histlog2300 $(bindir)
+	-$(INSTALL) xml2300 $(bindir)
+	-$(INSTALL) light2300 $(bindir)
+	-$(INSTALL) interval2300 $(bindir)
+	-$(INSTALL) minmax2300 $(bindir)
+	-$(INSTALL) pgsql2300 $(bindir)
 #	$(INSTALL) mysql2300 $(bindir)
 #	$(INSTALL) mysqlhistlog2300 $(bindir)
 
 uninstall:
-	rm -f $(libdir)/$(LIB).* $(bindir)/open2300 $(bindir)/dump2300 $(bindir)/log2300  $(bindir)/fetch2300 $(bindir)/srv2300 $(bindir)/wu2300 $(bindir)/cw2300 $(bindir)/xml2300 $(bindir)/light2300 $(bindir)/interval2300 $(bindir)/minmax2300 $(bindir)/histlog2300 $(bindir)/mysql2300 $(bindir)/mysqlhistlog2300
+	rm -f $(libdir)/$(LIB).* $(bindir)/open2300 $(bindir)/dump2300 $(bindir)/log2300  $(bindir)/fetch2300 $(bindir)/srv2300 $(bindir)/wu2300 $(bindir)/cw2300 $(bindir)/xml2300 $(bindir)/light2300 $(bindir)/interval2300 $(bindir)/minmax2300 $(bindir)/histlog2300 $(bindir)/pgsql2300 $(bindir)/mysql2300 $(bindir)/mysqlhistlog2300
 
 # Raspberry Pi OS (Debian) keeps shared libs under an arch-specific multiarch
 # dir (e.g. /usr/lib/arm-linux-gnueabihf on 32-bit RPi2, /usr/lib/aarch64-linux-gnu
