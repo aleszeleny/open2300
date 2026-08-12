@@ -1,0 +1,92 @@
+╔════════════════════════════════════════════════════════════════════╗
+║           Raspberry Pi Test Instructions                          ║
+╚════════════════════════════════════════════════════════════════════╝
+
+FILES UPDATED
+-------------
+✓ pyopen2300/weatherstation.py - Added detailed debug tracing
+✓ pyopen2300/serial_comm.py - Added serial I/O debug tracing
+✓ pyopen2300/cli/fetch2300.py - Already has verbose logging
+✓ test_fetch_debug.sh - Helper script for testing
+✓ DEBUG-GUIDE.md - Complete debug documentation
+
+TESTING STEPS
+--------------
+
+1. SSH to RPi:
+   ssh ales@192.168.1.162
+
+2. Activate virtual environment:
+   cd src/open2300/python-implementation/
+   source .venv/bin/activate
+
+3. Test serial port (should still work):
+   python3 ./test_serial_port.py -d /dev/ttyUSB0
+
+4. Test fetch2300 WITH DEBUG (this will show where it hangs):
+   WS2300_DEBUG=1 fetch2300 2>&1 | tee fetch_debug.log
+
+   OR use the helper script:
+   ./test_fetch_debug.sh 2>&1 | tee fetch_debug.log
+
+5. If it hangs, press Ctrl+C and examine the output
+
+WHAT TO LOOK FOR
+----------------
+
+The debug output will show:
+
+A) Serial port opening:
+   DEBUG[SERIAL]: Opening serial device: /dev/ttyUSB0
+   DEBUG[SERIAL]: Serial port opened successfully
+
+B) Reset sequence:
+   DEBUG[WS2300]: reset_06: Starting reset sequence
+   DEBUG[WS2300]: reset_06: Sending command 0x06
+   DEBUG[SERIAL]: Writing 1 byte(s): 0x06
+   DEBUG[SERIAL]: Reading 1 byte(s) from serial...
+
+C) Where it hangs:
+   - If it hangs in reset_06, weather station not responding to reset
+   - If it hangs in read_data, protocol issue
+   - Look for "TIMEOUT" messages
+
+D) Actual bytes sent/received:
+   Every byte will be logged with its hex value
+
+EXPECTED BEHAVIOR
+-----------------
+
+Normal sequence should be:
+1. Open serial port
+2. Reset (send 0x06, receive 0x02)
+3. Read temperature (send address, receive ACK, read data)
+
+If it hangs at step 2 or 3, we'll see exactly where and why.
+
+QUICK COMMANDS
+--------------
+
+# Test with full debug
+WS2300_DEBUG=1 fetch2300
+
+# Save debug to file
+WS2300_DEBUG=1 fetch2300 2>&1 | tee debug.log
+
+# Watch in real-time
+WS2300_DEBUG=1 fetch2300 2>&1 | less
+
+# Just the last part before hang (if it times out)
+WS2300_DEBUG=1 timeout 30 fetch2300 2>&1 | tail -50
+
+ENVIRONMENT VARIABLES
+---------------------
+
+WS2300_DEBUG=1    Enable low-level debug tracing
+LOG_LEVEL=3       Enable fetch2300 verbose logging
+
+Both can be used together:
+WS2300_DEBUG=1 LOG_LEVEL=3 fetch2300
+
+═══════════════════════════════════════════════════════════════════
+

@@ -259,6 +259,26 @@ int main(int argc, char *argv[])
 	strcat(logline, tempstring);
 
 
+	/* READ WEATHER STATION DATE AND TIME */
+
+	if (DEBUG) printf("DEBUG:%s:%d\tws_time()\n", __FILE__, __LINE__);
+	ws_time(ws2300, &time_min);
+	sprintf(tempstring, "WSDate %04d-%02d-%02d\nWSTime %02d:%02d\n",
+	        time_min.year, time_min.month, time_min.day,
+	        time_min.hour, time_min.minute);
+	strcat(logline, tempstring);
+
+
+	/* READ WEATHER STATION UTC DATE AND TIME (from station memory) */
+
+	if (DEBUG) printf("DEBUG:%s:%d\tws_time_utc_from_station()\n", __FILE__, __LINE__);
+	ws_time_utc_from_station(ws2300, &time_max);
+	sprintf(tempstring, "WSDateUTC %04d-%02d-%02d\nWSTimeUTC %02d:%02d\n",
+	        time_max.year, time_max.month, time_max.day,
+	        time_max.hour, time_max.minute);
+	strcat(logline, tempstring);
+
+
 	/* GET DATE AND TIME FOR LOG FILE, PLACE BEFORE ALL DATA IN LOG LINE */
 
 	time(&basictime);

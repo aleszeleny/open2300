@@ -1,0 +1,178 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║           WS2300 SERIAL PORT - QUICK REFERENCE                        ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ TESTING TOOLS                                                         │
+└───────────────────────────────────────────────────────────────────────┘
+
+Python Script (detailed):
+  python3 python-implementation/test_serial_port.py
+  python3 python-implementation/test_serial_port.py -d /dev/ttyUSB0
+
+Shell Script (basic):
+  ./test_serial_port.sh
+  ./test_serial_port.sh /dev/ttyUSB0
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ COMMON SERIAL DEVICE LOCATIONS                                       │
+└───────────────────────────────────────────────────────────────────────┘
+
+Built-in ports:       /dev/ttyS0, /dev/ttyS1
+USB adapters:         /dev/ttyUSB0, /dev/ttyUSB1
+USB CDC devices:      /dev/ttyACM0, /dev/ttyACM1
+
+Raspberry Pi GPIO:    /dev/ttyAMA0, /dev/serial0
+Raspberry Pi (alt):   /dev/ttyS0 (mini UART)
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ WS2300 SERIAL SETTINGS                                                │
+└───────────────────────────────────────────────────────────────────────┘
+
+Baudrate:             2400 bps
+Data bits:            8
+Parity:               None
+Stop bits:            1
+Flow control:         None
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ QUICK FIXES                                                           │
+└───────────────────────────────────────────────────────────────────────┘
+
+Permission Denied:
+  sudo usermod -a -G dialout $USER
+  # Then log out and log back in
+
+Find Serial Ports:
+  ls -la /dev/tty* | grep -E "(USB|ACM|S[0-9]|AMA)"
+  dmesg | grep -i tty
+
+Raspberry Pi - Enable Serial:
+  sudo raspi-config
+  # → Interfacing Options → Serial
+  # → Login shell: No, Serial hardware: Yes
+  sudo reboot
+
+Check Who's Using Port:
+  sudo fuser -v /dev/ttyUSB0
+  sudo lsof | grep /dev/ttyUSB0
+
+Temporary Permission Fix (testing only):
+  sudo chmod 666 /dev/ttyUSB0
+
+Monitor USB Connection:
+  sudo dmesg -w
+  # Then connect USB device
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ MANUAL SERIAL PORT TESTING                                           │
+└───────────────────────────────────────────────────────────────────────┘
+
+Using screen:
+  screen /dev/ttyUSB0 2400
+  # Exit: Ctrl-A then K
+
+Using minicom:
+  minicom -D /dev/ttyUSB0 -b 2400
+  # Exit: Ctrl-A then X
+
+Using stty/cat:
+  stty -F /dev/ttyUSB0 2400 cs8 -cstopb -parenb
+  cat /dev/ttyUSB0
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ DIAGNOSTICS                                                           │
+└───────────────────────────────────────────────────────────────────────┘
+
+List USB Devices:
+  lsusb
+
+List USB Serial:
+  lsusb | grep -i "serial\|uart\|ftdi\|prolific"
+
+Check Permissions:
+  ls -l /dev/ttyUSB0
+
+View Groups:
+  groups
+
+Kernel Messages:
+  dmesg | grep -i "tty\|serial"
+
+System Logs:
+  journalctl -xe | grep -i "tty"
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ INSTALLATION REQUIREMENTS                                            │
+└───────────────────────────────────────────────────────────────────────┘
+
+Python Script:
+  pip3 install pyserial
+
+Optional Tools:
+  sudo apt-get install screen minicom setserial
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ CONFIGURATION FILE                                                    │
+└───────────────────────────────────────────────────────────────────────┘
+
+Locations (searched in order):
+  1. ./open2300.conf
+  2. /usr/local/etc/open2300.conf
+  3. /etc/open2300.conf
+
+Example content:
+  SERIAL_DEVICE /dev/ttyUSB0
+  LOG_LEVEL 1
+  TIMEZONE 1
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ TROUBLESHOOTING WORKFLOW                                             │
+└───────────────────────────────────────────────────────────────────────┘
+
+1. Run test script:
+   python3 python-implementation/test_serial_port.py
+
+2. If device not found:
+   ls -la /dev/tty* | grep -E "(USB|ACM|S[0-9])"
+   dmesg | grep -i tty
+
+3. If permission denied:
+   sudo usermod -a -G dialout $USER
+   # Log out and log back in
+
+4. If device busy:
+   sudo fuser -v /dev/ttyUSB0
+   # Close the program using it
+
+5. If still not working:
+   sudo dmesg -w
+   # Reconnect USB device and watch for errors
+
+6. Test with terminal:
+   screen /dev/ttyUSB0 2400
+   # Should connect without errors
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ RASPBERRY PI NOTES                                                    │
+└───────────────────────────────────────────────────────────────────────┘
+
+✓ Fully supported on all Raspberry Pi models (Pi 2, 3, 4, Zero)
+✓ Use /dev/ttyAMA0 or /dev/serial0 for GPIO serial
+✓ Enable serial port in raspi-config before first use
+✓ Works great with USB-to-serial adapters too
+
+Test command:
+  python3 python-implementation/test_serial_port.py -d /dev/ttyAMA0
+
+┌───────────────────────────────────────────────────────────────────────┐
+│ MORE INFORMATION                                                      │
+└───────────────────────────────────────────────────────────────────────┘
+
+Detailed documentation: TESTING-SERIAL-PORT.md
+Raspberry Pi guide:     python-implementation/INSTALL-RASPBERRY-PI.md
+Project README:         README
+Installation guide:     INSTALL
+
+═══════════════════════════════════════════════════════════════════════
+

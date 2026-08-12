@@ -133,8 +133,6 @@ def main():
                 date_elem.text = f"{ws_utc.year:04d}-{ws_utc.month:02d}-{ws_utc.day:02d}"
                 time_elem = SubElement(station_utc, 'time')
                 time_elem.text = f"{ws_utc.hour:02d}:{ws_utc.minute:02d}"
-            except:
-                pass
             
             # Connection Type
             try:
@@ -153,6 +151,8 @@ def main():
                 conn_elem.text = conn_str
             except Exception as e:
                 print(f"Warning: Could not read connection type: {e}", file=sys.stderr)
+            except:
+                pass
             
             # Write to file
             xml_string = prettify_xml(root)

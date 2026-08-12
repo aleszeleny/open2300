@@ -36,7 +36,6 @@ def debug_print(msg):
 class Timestamp:
     """Timestamp structure for weather data"""
     def __init__(self):
-        self.second = 0
         self.minute = 0
         self.hour = 0
         self.day = 0
@@ -199,20 +198,19 @@ class WeatherStation:
                 debug_print(f"reset_06: Error flushing buffer: {e}")
                 pass
             
-            # # Small delay to let the flush complete and line stabilize
-            # time.sleep(0.001)  # 1ms delay
+            # Small delay to let the flush complete and line stabilize
+            time.sleep(0.001)  # 1ms delay
             
             debug_print(f"reset_06: Sending command 0x06")
             self.device.write(command)
             
-            # # Small delay to let the device process the command
-            # time.sleep(0.01)  # 10ms delay (enough for 2-3 bytes at 2400 baud)
+            # Small delay to let the device process the command
+            time.sleep(0.01)  # 10ms delay (enough for 2-3 bytes at 2400 baud)
             debug_print("reset_06: Waiting for response...")
             
             # Read responses until we get a 2 OR timeout
             # Keep reading as long as data comes back
             # The station may send 0x00 first, then 0x02
-            # This matches the C implementation which reads until no more data
             read_count = 0
             got_two = False
             while True:
@@ -241,7 +239,7 @@ class WeatherStation:
             
             debug_print(f"reset_06: No 0x02 received in {read_count} bytes")
             
-            # Sleep longer for each retry (matches C: usleep(50000 * i) = 0.05s * i)
+            # Sleep longer for each retry
             if i > 0:
                 sleep_time = 0.05 * i
                 debug_print(f"reset_06: Sleeping {sleep_time:.3f}s before retry")
@@ -625,15 +623,15 @@ class WeatherStation:
         
         # Decode BCD time/date from weather station
         timestamp = Timestamp()
-        timestamp.second = ((time_data[0] >> 4) * 10) + (time_data[0] & 0xF)
+        # time_data[0] is seconds (not stored in Timestamp struct)
         timestamp.minute = ((time_data[1] >> 4) * 10) + (time_data[1] & 0xF)
         timestamp.hour = ((time_data[2] >> 4) * 10) + (time_data[2] & 0xF)
         timestamp.day = ((date_data[0] >> 4) * 10) + (date_data[0] & 0xF)
         timestamp.month = ((date_data[1] >> 4) * 10) + (date_data[1] & 0xF)
         timestamp.year = 2000 + ((date_data[2] >> 4) * 10) + (date_data[2] & 0xF)
-
+        
         return timestamp
-
+    
     def ws_time_utc_from_station(self) -> Timestamp:
         """
         Read UTC time directly from weather station memory
@@ -657,15 +655,15 @@ class WeatherStation:
         
         # Decode BCD time/date from weather station
         timestamp = Timestamp()
-        timestamp.second = ((time_data[0] >> 4) * 10) + (time_data[0] & 0xF)
+        # time_data[0] is seconds (not stored in Timestamp struct)
         timestamp.minute = ((time_data[1] >> 4) * 10) + (time_data[1] & 0xF)
         timestamp.hour = ((time_data[2] >> 4) * 10) + (time_data[2] & 0xF)
         timestamp.day = ((date_data[0] >> 4) * 10) + (date_data[0] & 0xF)
         timestamp.month = ((date_data[1] >> 4) * 10) + (date_data[1] & 0xF)
         timestamp.year = 2000 + ((date_data[2] >> 4) * 10) + (date_data[2] & 0xF)
-
+        
         return timestamp
-
+    
     def ws_time_utc_calculated(self, timezone_offset: float) -> Timestamp:
         """
         Calculate UTC time from local time using timezone offset
@@ -743,47 +741,30 @@ class WeatherStation:
         
         return hours_diff
     
-    # def ws_dcf77_sync_status(self, timezone_offset: float) -> int:
-    #     """
-    #     Read DCF77 synchronization status from station register
-        
-    #     NOTE: Address 0x020 contains alarm active flags, with bit 2 marked
-    #           as "Time?" in the memory map. This bit appears to indicate
-    #           DCF77 synchronization status based on the station's display icon.
-        
-    #     Args:
-    #         timezone_offset: Hours relative to UTC (unused, kept for API compatibility)
-        
-    #     Returns:
-    #         1 if synced (bit 2 set), 0 if not synced (bit 2 clear), -1 if error
-    #     """
-    #     # Read status register at address 0x020
-    #     data = self.read_safe(0x113, 1)
-    #     if data is None:
-    #         return -1  # Error reading
-        
-    #     # Check bit 2 (Time? bit) - this appears to indicate DCF77 sync status
-    #     # Bit 2 = 1 means synced, Bit 2 = 0 means not synced
-    #     sync_bit = (data[0] >> 2) & 0x01
-        
-    #     return sync_bit
-    
-    def ws_connection_type(self) -> int:
+    def ws_dcf77_sync_status(self, timezone_offset: float) -> int:
         """
-        Read connection type from weather station
+        Read DCF77 synchronization status from station register
         
-        Address: 0x54D
-        Values: 0x0 = Cable, 0x3 = Lost, 0xF = Wireless
+        NOTE: Address 0x020 contains alarm active flags, with bit 2 marked
+              as "Time?" in the memory map. This bit appears to indicate
+              DCF77 synchronization status based on the station's display icon.
+        
+        Args:
+            timezone_offset: Hours relative to UTC (unused, kept for API compatibility)
         
         Returns:
-            Connection type (0=Cable, 3=Lost, 15=Wireless), -1 if error
+            1 if synced (bit 2 set), 0 if not synced (bit 2 clear), -1 if error
         """
-        # Read connection type register at address 0x54D
-        data = self.read_safe(0x54D, 1)
+        # Read status register at address 0x020
+        data = self.read_safe(0x020, 1)
         if data is None:
             return -1  # Error reading
         
-        return int(data[0])
+        # Check bit 2 (Time? bit) - this appears to indicate DCF77 sync status
+        # Bit 2 = 1 means synced, Bit 2 = 0 means not synced
+        sync_bit = (data[0] >> 2) & 0x01
+        
+        return sync_bit
     
     def temperature_indoor_minmax(self, temperature_conv: int = CELSIUS) -> Tuple[float, float, Timestamp, Timestamp]:
         """
@@ -1004,104 +985,9 @@ class WeatherStation:
         
         # Calculate raw wind speed - convert from m/s to whatever
         wind_speed = (((data[2] & 0xF) << 8) + data[1]) / 10.0 * wind_speed_conv_factor
-
+        
         return wind_speed, winddir_index, winddir
-
-    def wind_reset_fast(self, minmax: int, current_wind: int) -> int:
-        """
-        Reset wind min/max using an already-known current wind value,
-        avoiding an extra serial read of the wind registers.
-
-        Args:
-            minmax: RESET_MIN and/or RESET_MAX (bitwise OR)
-            current_wind: Raw current wind value (as read from 0x527, before
-                          conversion to wind_speed units)
-
-        Returns:
-            1 on success
-        """
-        data_value = bytes([
-            current_wind & 0xF,
-            (current_wind >> 4) & 0xF,
-            (current_wind >> 8) & 0xF,
-            (current_wind >> 12) & 0xF,
-        ])
-
-        data_read = self.read_safe(0x23B, 6)
-        if data_read is None:
-            raise IOError("Failed to read current time for wind reset")
-
-        data_time = bytes([
-            data_read[0] & 0xF,
-            data_read[0] >> 4,
-            data_read[1] & 0xF,
-            data_read[1] >> 4,
-            data_read[2] >> 4,
-            data_read[3] & 0xF,
-            data_read[3] >> 4,
-            data_read[4] & 0xF,
-            data_read[4] >> 4,
-            data_read[5] & 0xF,
-        ])
-
-        if minmax & RESET_MIN:
-            if self.write_safe(0x4EE, 4, WRITENIB, data_value) != 4:
-                raise IOError("Failed to write wind min value")
-            if self.write_safe(0x4F8, 10, WRITENIB, data_time) != 10:
-                raise IOError("Failed to write wind min timestamp")
-
-        if minmax & RESET_MAX:
-            if self.write_safe(0x4F4, 4, WRITENIB, data_value) != 4:
-                raise IOError("Failed to write wind max value")
-            if self.write_safe(0x502, 10, WRITENIB, data_time) != 10:
-                raise IOError("Failed to write wind max timestamp")
-
-        return 1
-
-    def wind_all_reset(self, wind_speed_conv_factor: float, minmax: int) -> Tuple[float, int, list]:
-        """
-        Read wind speed, direction index, and last 6 directions, then reset
-        wind min/max using the same packet (no extra serial read).
-
-        Args:
-            wind_speed_conv_factor: Wind speed conversion factor
-            minmax: RESET_MIN and/or RESET_MAX (bitwise OR)
-
-        Returns:
-            Tuple of (wind_speed, direction_index, direction_degrees_list)
-        """
-        for i in range(MAXWINDRETRIES):
-            data = self.read_safe(0x527, 6)
-            if data is None:
-                raise IOError("Failed to read wind data")
-
-            if (data[0] != 0x00 or
-                    (data[1] == 0xFF and ((data[2] & 0xF) == 0 or (data[2] & 0xF) == 1))):
-                if i < MAXWINDRETRIES - 1:
-                    time.sleep(10)  # Wait 10 seconds for new wind measurement
-                    continue
-                else:
-                    raise IOError("Invalid wind data after max retries")
-            else:
-                break
-
-        winddir_index = (data[2] >> 4)
-        winddir = [
-            (data[2] >> 4) * 22.5,  # Current direction
-            (data[3] & 0xF) * 22.5,  # -1
-            (data[3] >> 4) * 22.5,   # -2
-            (data[4] & 0xF) * 22.5,  # -3
-            (data[4] >> 4) * 22.5,   # -4
-            (data[5] & 0xF) * 22.5   # -5
-        ]
-
-        current_wind = ((data[2] & 0xF) << 8) + data[1]
-        self.wind_reset_fast(minmax, current_wind * 36)
-
-        wind_speed = current_wind / 10.0 * wind_speed_conv_factor
-
-        return wind_speed, winddir_index, winddir
-
+    
     def windchill(self, temperature_conv: int = CELSIUS) -> float:
         """
         Read windchill temperature
