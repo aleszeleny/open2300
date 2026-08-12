@@ -36,6 +36,7 @@ def debug_print(msg):
 class Timestamp:
     """Timestamp structure for weather data"""
     def __init__(self):
+        self.second = 0
         self.minute = 0
         self.hour = 0
         self.day = 0
@@ -624,15 +625,15 @@ class WeatherStation:
         
         # Decode BCD time/date from weather station
         timestamp = Timestamp()
-        # time_data[0] is seconds (not stored in Timestamp struct)
+        timestamp.second = ((time_data[0] >> 4) * 10) + (time_data[0] & 0xF)
         timestamp.minute = ((time_data[1] >> 4) * 10) + (time_data[1] & 0xF)
         timestamp.hour = ((time_data[2] >> 4) * 10) + (time_data[2] & 0xF)
         timestamp.day = ((date_data[0] >> 4) * 10) + (date_data[0] & 0xF)
         timestamp.month = ((date_data[1] >> 4) * 10) + (date_data[1] & 0xF)
         timestamp.year = 2000 + ((date_data[2] >> 4) * 10) + (date_data[2] & 0xF)
-        
+
         return timestamp
-    
+
     def ws_time_utc_from_station(self) -> Timestamp:
         """
         Read UTC time directly from weather station memory
@@ -656,15 +657,15 @@ class WeatherStation:
         
         # Decode BCD time/date from weather station
         timestamp = Timestamp()
-        # time_data[0] is seconds (not stored in Timestamp struct)
+        timestamp.second = ((time_data[0] >> 4) * 10) + (time_data[0] & 0xF)
         timestamp.minute = ((time_data[1] >> 4) * 10) + (time_data[1] & 0xF)
         timestamp.hour = ((time_data[2] >> 4) * 10) + (time_data[2] & 0xF)
         timestamp.day = ((date_data[0] >> 4) * 10) + (date_data[0] & 0xF)
         timestamp.month = ((date_data[1] >> 4) * 10) + (date_data[1] & 0xF)
         timestamp.year = 2000 + ((date_data[2] >> 4) * 10) + (date_data[2] & 0xF)
-        
+
         return timestamp
-    
+
     def ws_time_utc_calculated(self, timezone_offset: float) -> Timestamp:
         """
         Calculate UTC time from local time using timezone offset
@@ -1003,9 +1004,104 @@ class WeatherStation:
         
         # Calculate raw wind speed - convert from m/s to whatever
         wind_speed = (((data[2] & 0xF) << 8) + data[1]) / 10.0 * wind_speed_conv_factor
-        
+
         return wind_speed, winddir_index, winddir
-    
+
+    def wind_reset_fast(self, minmax: int, current_wind: int) -> int:
+        """
+        Reset wind min/max using an already-known current wind value,
+        avoiding an extra serial read of the wind registers.
+
+        Args:
+            minmax: RESET_MIN and/or RESET_MAX (bitwise OR)
+            current_wind: Raw current wind value (as read from 0x527, before
+                          conversion to wind_speed units)
+
+        Returns:
+            1 on success
+        """
+        data_value = bytes([
+            current_wind & 0xF,
+            (current_wind >> 4) & 0xF,
+            (current_wind >> 8) & 0xF,
+            (current_wind >> 12) & 0xF,
+        ])
+
+        data_read = self.read_safe(0x23B, 6)
+        if data_read is None:
+            raise IOError("Failed to read current time for wind reset")
+
+        data_time = bytes([
+            data_read[0] & 0xF,
+            data_read[0] >> 4,
+            data_read[1] & 0xF,
+            data_read[1] >> 4,
+            data_read[2] >> 4,
+            data_read[3] & 0xF,
+            data_read[3] >> 4,
+            data_read[4] & 0xF,
+            data_read[4] >> 4,
+            data_read[5] & 0xF,
+        ])
+
+        if minmax & RESET_MIN:
+            if self.write_safe(0x4EE, 4, WRITENIB, data_value) != 4:
+                raise IOError("Failed to write wind min value")
+            if self.write_safe(0x4F8, 10, WRITENIB, data_time) != 10:
+                raise IOError("Failed to write wind min timestamp")
+
+        if minmax & RESET_MAX:
+            if self.write_safe(0x4F4, 4, WRITENIB, data_value) != 4:
+                raise IOError("Failed to write wind max value")
+            if self.write_safe(0x502, 10, WRITENIB, data_time) != 10:
+                raise IOError("Failed to write wind max timestamp")
+
+        return 1
+
+    def wind_all_reset(self, wind_speed_conv_factor: float, minmax: int) -> Tuple[float, int, list]:
+        """
+        Read wind speed, direction index, and last 6 directions, then reset
+        wind min/max using the same packet (no extra serial read).
+
+        Args:
+            wind_speed_conv_factor: Wind speed conversion factor
+            minmax: RESET_MIN and/or RESET_MAX (bitwise OR)
+
+        Returns:
+            Tuple of (wind_speed, direction_index, direction_degrees_list)
+        """
+        for i in range(MAXWINDRETRIES):
+            data = self.read_safe(0x527, 6)
+            if data is None:
+                raise IOError("Failed to read wind data")
+
+            if (data[0] != 0x00 or
+                    (data[1] == 0xFF and ((data[2] & 0xF) == 0 or (data[2] & 0xF) == 1))):
+                if i < MAXWINDRETRIES - 1:
+                    time.sleep(10)  # Wait 10 seconds for new wind measurement
+                    continue
+                else:
+                    raise IOError("Invalid wind data after max retries")
+            else:
+                break
+
+        winddir_index = (data[2] >> 4)
+        winddir = [
+            (data[2] >> 4) * 22.5,  # Current direction
+            (data[3] & 0xF) * 22.5,  # -1
+            (data[3] >> 4) * 22.5,   # -2
+            (data[4] & 0xF) * 22.5,  # -3
+            (data[4] >> 4) * 22.5,   # -4
+            (data[5] & 0xF) * 22.5   # -5
+        ]
+
+        current_wind = ((data[2] & 0xF) << 8) + data[1]
+        self.wind_reset_fast(minmax, current_wind * 36)
+
+        wind_speed = current_wind / 10.0 * wind_speed_conv_factor
+
+        return wind_speed, winddir_index, winddir
+
     def windchill(self, temperature_conv: int = CELSIUS) -> float:
         """
         Read windchill temperature
