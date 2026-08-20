@@ -13,5 +13,7 @@ pyserial>=3.4
 # Alternative: Use psycopg2-binary if available for your architecture
 # psycopg2-binary>=2.9.0
 
-# SQLite is included in Python standard library - no additional package needed
+# MQTT support (optional)
+# paho-mqtt>=1.6.0
 
+# SQLite is included in Python standard library - no additional package needed

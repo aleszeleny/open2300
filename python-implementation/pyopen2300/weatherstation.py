@@ -1217,6 +1217,15 @@ class WeatherStation:
         time_max.year = 2000 + ((data[10] >> 4) * 10) + (data[10] & 0xF)
         
         return rain_1h, rain_1h_max, time_max
+
+    def rain_1h(self, rain_conv_factor: float = 1.0) -> float:
+        """Read current rain for the last hour only."""
+        data = self.read_safe(0x4B4, 3)
+        if data is None:
+            raise IOError("Failed to read rain 1h")
+        return ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                (data[1] >> 4) * 10 + (data[1] & 0xF) +
+                (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) / rain_conv_factor
     
     def rain_24h_all(self, rain_conv_factor: float = 1.0) -> Tuple[float, float, Timestamp]:
         """
@@ -1248,6 +1257,15 @@ class WeatherStation:
         time_max.year = 2000 + ((data[10] >> 4) * 10) + (data[10] & 0xF)
         
         return rain_24h, rain_24h_max, time_max
+
+    def rain_24h(self, rain_conv_factor: float = 1.0) -> float:
+        """Read current rain for the last 24 hours only."""
+        data = self.read_safe(0x497, 3)
+        if data is None:
+            raise IOError("Failed to read rain 24h")
+        return ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                (data[1] >> 4) * 10 + (data[1] & 0xF) +
+                (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) / rain_conv_factor
     
     def rain_total_all(self, rain_conv_factor: float = 1.0) -> Tuple[float, Timestamp]:
         """
@@ -1275,6 +1293,15 @@ class WeatherStation:
         time_since.year = 2000 + ((data[7] >> 4) * 10) + (data[7] & 0xF)
         
         return rain_total, time_since
+
+    def rain_total(self, rain_conv_factor: float = 1.0) -> float:
+        """Read accumulated rain total only."""
+        data = self.read_safe(0x4D2, 3)
+        if data is None:
+            raise IOError("Failed to read rain total")
+        return ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                (data[1] >> 4) * 10 + (data[1] & 0xF) +
+                (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) / rain_conv_factor
     
     def rel_pressure_minmax(self, pressure_conv_factor: float = 1.0) -> Tuple[float, float, Timestamp, Timestamp]:
         """

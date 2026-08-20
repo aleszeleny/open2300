@@ -70,6 +70,18 @@ class Config:
         self.pgsql_table = "weather"
         self.pgsql_station = "open2300"
         self.pgsql_daemon_interval = 300  # Default: 5 minutes (in seconds)
+
+        # MQTT reporting (disabled when host is empty)
+        self.mqtt_host = ""
+        self.mqtt_port = 1883
+        self.mqtt_username = ""
+        self.mqtt_password = ""
+        self.mqtt_base_topic = "open2300"
+        self.mqtt_station = ""
+        self.mqtt_qos = 1
+        self.mqtt_retain = True
+        self.mqtt_ha_discovery = False
+        self.mqtt_discovery_prefix = "homeassistant"
         
         # Load configuration from file
         if config_path:
@@ -187,3 +199,34 @@ class Config:
             except ValueError:
                 self.pgsql_daemon_interval = 300  # Default if invalid value
 
+        elif key == "MQTT_HOST":
+            self.mqtt_host = value
+
+        elif key == "MQTT_PORT":
+            self.mqtt_port = int(value)
+
+        elif key == "MQTT_USERNAME":
+            self.mqtt_username = value
+
+        elif key == "MQTT_PASSWORD":
+            self.mqtt_password = value
+
+        elif key == "MQTT_BASE_TOPIC":
+            self.mqtt_base_topic = value
+
+        elif key == "MQTT_STATION":
+            self.mqtt_station = value
+
+        elif key == "MQTT_QOS":
+            self.mqtt_qos = int(value)
+            if self.mqtt_qos not in (0, 1, 2):
+                self.mqtt_qos = 1
+
+        elif key == "MQTT_RETAIN":
+            self.mqtt_retain = value.lower() in ("1", "yes", "true", "on")
+
+        elif key == "MQTT_HA_DISCOVERY":
+            self.mqtt_ha_discovery = value.lower() in ("1", "yes", "true", "on")
+
+        elif key == "MQTT_DISCOVERY_PREFIX":
+            self.mqtt_discovery_prefix = value

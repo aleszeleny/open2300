@@ -33,6 +33,8 @@ setup(
     
     extras_require={
         'postgresql': ['psycopg2-binary>=2.9.0'],
+        'mqtt': ['paho-mqtt>=1.6.0'],
+        'reporting': ['psycopg2-binary>=2.9.0', 'paho-mqtt>=1.6.0'],
     },
     
     entry_points={
@@ -46,6 +48,8 @@ setup(
             'xml2300=pyopen2300.cli.xml2300:main',
             'wu2300=pyopen2300.cli.wu2300:main',
             'pgsql2300=pyopen2300.cli.pgsql2300:main',
+            'mqtt2300=pyopen2300.cli.mqtt2300:main',
+            'pgsql2300-daemon=pyopen2300.cli.pgsql2300_daemon:main',
             'sqlitelog2300=pyopen2300.cli.sqlitelog2300:main',
             'minmax2300=pyopen2300.cli.minmax2300:main',
             'interval2300=pyopen2300.cli.interval2300:main',
@@ -76,4 +80,3 @@ setup(
     
     keywords='weather station ws2300 lacrosse',
 )
-

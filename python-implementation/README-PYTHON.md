@@ -155,6 +155,16 @@ The tools will search for the config file in these locations (in order):
   pgsql2300 [config_file]
   ```
 
+- **mqtt2300** - Publish one retained JSON weather snapshot to MQTT
+  ```bash
+  mqtt2300 [config_file]
+  ```
+
+- **pgsql2300-daemon** - Continuously report to PostgreSQL and optional MQTT
+  ```bash
+  pgsql2300-daemon --config open2300.conf
+  ```
+
 - **sqlitelog2300** - Log to SQLite database
   ```bash
   sqlitelog2300 weather.db [config_file]
@@ -172,6 +182,11 @@ The tools will search for the config file in these locations (in order):
    PGSQL_TABLE weather
    PGSQL_STATION mystation
    ```
+
+MQTT reporting is enabled by setting `MQTT_HOST`. The default state topic is
+`open2300/<MQTT_STATION>`, and Home Assistant discovery is enabled with
+`MQTT_HA_DISCOVERY true`. The daemon adds retained availability and LWT;
+one-shot commands publish state/discovery only.
 
 ### SQLite
 

@@ -100,6 +100,8 @@ After installation, these commands are available:
 
 **Database:**
 - `pgsql2300` - PostgreSQL logging
+- `pgsql2300-daemon` - Continuous PostgreSQL/MQTT reporting
+- `mqtt2300` - One-shot MQTT logging
 - `sqlitelog2300` - SQLite logging
 
 **Station control:**
