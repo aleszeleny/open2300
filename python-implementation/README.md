@@ -16,7 +16,7 @@ pip3 install -r requirements-rpi.txt     # For Raspberry Pi
 pip install -e .
 
 # Configure
-cp ../open2300-dist.conf open2300.conf
+cp open2300-dist.conf open2300.conf
 nano open2300.conf  # Edit serial device
 
 # Test
@@ -152,4 +152,3 @@ Python port: 2025
 
 The original C implementation is in the parent directory.
 Both implementations can coexist and share the same `open2300.conf` file.
-

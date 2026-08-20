@@ -24,6 +24,48 @@ except ImportError:
 PGSQL2300_VERSION = f"pgsql2300.py {__version__}"
 
 
+def _table_identifier(table_name: str):
+    """Build a safe SQL identifier, preserving schema-qualified names."""
+    parts = []
+    part = []
+    quoted = False
+    index = 0
+
+    while index < len(table_name):
+        character = table_name[index]
+        if character == '"':
+            part.append(character)
+            if quoted and index + 1 < len(table_name) and table_name[index + 1] == '"':
+                part.append('"')
+                index += 1
+            else:
+                quoted = not quoted
+        elif character == '.' and not quoted:
+            parts.append(''.join(part).strip())
+            part = []
+        else:
+            part.append(character)
+        index += 1
+
+    if quoted:
+        raise ValueError(f"Unterminated quoted table identifier: {table_name}")
+
+    parts.append(''.join(part).strip())
+    if not parts or any(not part for part in parts):
+        raise ValueError(f"Invalid table identifier: {table_name}")
+
+    identifiers = []
+    for part in parts:
+        if part.startswith('"') or part.endswith('"'):
+            if len(part) < 2 or not (part.startswith('"') and part.endswith('"')):
+                raise ValueError(f"Invalid quoted table identifier: {table_name}")
+            identifiers.append(part[1:-1].replace('""', '"'))
+        else:
+            identifiers.append(part)
+
+    return sql.Identifier(*identifiers)
+
+
 class PostgreSQLLogger:
     """
     PostgreSQL logger matching C implementation
@@ -135,7 +177,7 @@ class PostgreSQLLogger:
                     , %s, %s, %s, %s, %s, %s, %s, %s, %s
                     , %s, %s, %s, %s, %s, %s, %s
                 )
-            """).format(sql.Identifier(self.table_name))
+            """).format(_table_identifier(self.table_name))
 
             # station_datetime mirrors ws_datetime_utc, matching pgsql2300.c
             self.cursor.execute(insert_query, (

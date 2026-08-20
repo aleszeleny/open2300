@@ -20,7 +20,7 @@ QUICK INSTALL
    pip install -e .
 
 4. Configure:
-   cp ../open2300-dist.conf open2300.conf
+   cp open2300-dist.conf open2300.conf
    nano open2300.conf
    # Set your serial device (e.g., /dev/ttyS0 or /dev/ttyAMA0)
 
@@ -108,4 +108,3 @@ For more help:
   - See RASPBERRY-PI-README-FIRST.txt for RPi-specific help
 
 ================================================================================
-

@@ -76,7 +76,7 @@ sudo usermod -a -G dialout $USER
 Copy the example configuration file:
 
 ```bash
-cp open2300-dist.conf open2300.conf
+cp python-implementation/open2300-dist.conf open2300.conf
 ```
 
 Edit `open2300.conf` to set your serial device and preferences:
@@ -268,4 +268,3 @@ See the COPYING file for details.
 For issues specific to the Python implementation, check the code comments and compare with the original C implementation.
 
 For weather station hardware issues, refer to the original open2300 documentation.
-
