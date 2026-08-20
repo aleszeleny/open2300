@@ -57,7 +57,7 @@ def _open(self):
 
 Also improved the `reset_06()` function to properly handle the WS2300 reset protocol:
 
-- Keep reading bytes until timeout (station may send 0x00 first, then 0x02)
+- Continue past an initial 0x00, then return immediately on 0x02 like C
 - Accept success if 0x02 is received at any point during the read loop
 - Added small delays after flush and write operations
 
@@ -178,4 +178,3 @@ The WS2300 weather station requires:
 **Issue:** fetch2300 hangs on Raspberry Pi  
 **Resolution:** Add DTR=low, RTS=high settings to serial port initialization  
 **Status:** ✅ Fixed and tested on Raspberry Pi with USB-to-serial adapter
-
