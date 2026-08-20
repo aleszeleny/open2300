@@ -7,11 +7,14 @@ Reads all weather measurements and logs them to PostgreSQL database.
 Matches the C implementation exactly.
 """
 
+import inspect
+import os
 import sys
+from datetime import datetime
 from .. import __version__
 from ..weatherstation import WeatherStation
 from ..config import Config
-from ..constants import WIND_DIRECTIONS, RESET_MIN, RESET_MAX
+from ..constants import WIND_DIRECTIONS, RESET_MIN, RESET_MAX, LOG_MIN, LOG_MED, LOG_MAX
 
 try:
     import psycopg2
@@ -22,6 +25,21 @@ except ImportError:
 
 
 PGSQL2300_VERSION = f"pgsql2300.py {__version__}"
+
+
+def log_message(config, level: int, message: str):
+    """Write a C-compatible diagnostic message when the level is enabled."""
+    if config.log_level < level:
+        return
+
+    caller = inspect.currentframe().f_back
+    source_file = os.path.basename(caller.f_code.co_filename)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(
+        f"{timestamp} [{os.getpid()}]\t[{source_file}:{caller.f_lineno}]\t{message}",
+        file=sys.stderr,
+        flush=True,
+    )
 
 
 def _table_identifier(table_name: str):
@@ -268,75 +286,77 @@ def main():
             sys.exit(1)
 
         # Open weather station
-        print(f"LOG: Opening weather station on {config.serial_device_name}", file=sys.stderr)
+        log_message(config, LOG_MIN, f"Starting pgsql2300 version {PGSQL2300_VERSION}")
+        log_message(config, LOG_MED, "Reading data from weather station.")
+        log_message(config, LOG_MAX, f"Opening weather station on {config.serial_device_name}")
         with WeatherStation(config.serial_device_name) as ws:
-            print("LOG: Reading weather data...", file=sys.stderr)
+            log_message(config, LOG_MAX, "Reading weather data...")
 
             # READ TEMPERATURE INDOOR
-            print("LOG: READ TEMPERATURE INDOOR", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ TEMPERATURE INDOOR.")
             temperature_indoor = ws.temperature_indoor(config.temperature_conv)
 
             # READ TEMPERATURE OUTDOOR
-            print("LOG: READ TEMPERATURE OUTDOOR", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ TEMPERATURE OUTDOOR.")
             temperature_outdoor = ws.temperature_outdoor(config.temperature_conv)
 
             # READ DEWPOINT
-            print("LOG: READ DEWPOINT", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ DEWPOINT.")
             dewpoint = ws.dewpoint(config.temperature_conv)
 
             # READ RELATIVE HUMIDITY INDOOR
-            print("LOG: READ RELATIVE HUMIDITY INDOOR", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ RELATIVE HUMIDITY INDOOR.")
             humidity_indoor = ws.humidity_indoor()
 
             # READ RELATIVE HUMIDITY OUTDOOR
-            print("LOG: READ RELATIVE HUMIDITY OUTDOOR", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ RELATIVE HUMIDITY OUTDOOR.")
             humidity_outdoor = ws.humidity_outdoor()
 
             # READ WIND SPEED MIN AND MAX BEFORE RESETTING THEM
-            print("LOG: READ WIND SPEED MIN AND MAX", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ WIND SPEED MIN AND MAX.")
             wind_speed_min, wind_speed_max, wind_speed_min_datetime, wind_speed_max_datetime = \
                 ws.wind_minmax(config.wind_speed_conv_factor)
 
             # READ STATION LOCAL AND UTC TIME
-            print("LOG: READ STATION LOCAL TIME", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ STATION LOCAL TIME.")
             ws_datetime_local = ws.ws_time_local()
-            print("LOG: READ STATION UTC TIME", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ STATION UTC TIME.")
             ws_datetime_utc = ws.ws_time_utc_from_station()
 
             # READ WIND SPEED AND DIRECTION, THEN RESET WIND MIN/MAX
-            print("LOG: READ WIND SPEED AND DIRECTION, RESET MIN/MAX", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ WIND SPEED AND DIRECTION, RESET MIN/MAX.")
             wind_speed, winddir_index, wind_angle = ws.wind_all_reset(
                 config.wind_speed_conv_factor, RESET_MIN + RESET_MAX)
             wind_direction = WIND_DIRECTIONS[winddir_index] if winddir_index < len(WIND_DIRECTIONS) else "N"
 
             # READ WINDCHILL
-            print("LOG: READ WINDCHILL", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ WINDCHILL.")
             wind_chill = ws.windchill(config.temperature_conv)
 
             # READ RAIN 1H
-            print("LOG: READ RAIN 1H", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ RAIN 1H.")
             rain_1h, _, _ = ws.rain_1h_all(config.rain_conv_factor)
 
             # READ RAIN 24H
-            print("LOG: READ RAIN 24H", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ RAIN 24H.")
             rain_24h, _, _ = ws.rain_24h_all(config.rain_conv_factor)
 
             # READ RAIN TOTAL
-            print("LOG: READ RAIN TOTAL", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ RAIN TOTAL.")
             rain_total, _ = ws.rain_total_all(config.rain_conv_factor)
 
             # READ RELATIVE PRESSURE
-            print("LOG: READ RELATIVE PRESSURE", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ RELATIVE PRESSURE.")
             rel_pressure = ws.rel_pressure(config.pressure_conv_factor)
 
             # READ TENDENCY AND FORECAST
-            print("LOG: READ TENDENCY AND FORECAST", file=sys.stderr)
+            log_message(config, LOG_MAX, "READ TENDENCY AND FORECAST.")
             tendency, forecast = ws.tendency_forecast()
 
-            print("LOG: Closing weather station", file=sys.stderr)
+            log_message(config, LOG_MAX, "CLOSING THE WEATHER STATION.")
 
         # Log to database
-        print("LOG: Connecting to PostgreSQL database", file=sys.stderr)
+        log_message(config, LOG_MED, "Connecting to PostgreSQL database.")
         with PostgreSQLLogger(config.pgsql_connect,
                              config.pgsql_table,
                              getattr(config, 'pgsql_station', None)) as db:
@@ -365,7 +385,7 @@ def main():
                 forecast=forecast
             )
 
-        print("LOG: Data successfully logged to PostgreSQL", file=sys.stderr)
+        log_message(config, LOG_MIN, "Data successfully logged to PostgreSQL.")
         return 0
 
     except Exception as e:
