@@ -44,7 +44,7 @@ class SerialDevice:
                 bytesize=serial.EIGHTBITS,
                 parity=serial.PARITY_NONE,
                 stopbits=serial.STOPBITS_ONE,
-                timeout=0.1,  # Reduced from 1.0s to 0.1s for faster reads (matches C VTIME=1)
+                timeout=1.0,  # Matches Linux C VTIME=10 (1 second)
                 xonxoff=False,
                 rtscts=False,
                 dsrdtr=False
@@ -204,4 +204,3 @@ def citizen_weather_send(config, datastring: str) -> int:
             continue
     
     return -1
-
