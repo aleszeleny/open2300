@@ -40,14 +40,14 @@ class WeatherSnapshot:
     def mqtt_dict(self):
         """Return the retained MQTT state without debug-only timestamps."""
         data = {
-            'temperature_indoor': self.temperature_indoor,
-            'temperature_outdoor': self.temperature_outdoor,
-            'dewpoint': self.dewpoint,
+            'temperature_indoor': self._measurement(self.temperature_indoor),
+            'temperature_outdoor': self._measurement(self.temperature_outdoor),
+            'dewpoint': self._measurement(self.dewpoint),
             'humidity_indoor': self.humidity_indoor,
             'humidity_outdoor': self.humidity_outdoor,
-            'wind_speed_min': self.wind_speed_min,
-            'wind_speed_max': self.wind_speed_max,
-            'wind_speed': self.wind_speed,
+            'wind_speed_min': self._measurement(self.wind_speed_min),
+            'wind_speed_max': self._measurement(self.wind_speed_max),
+            'wind_speed': self._measurement(self.wind_speed),
             'wind_angle_current': self.wind_angle[0],
             'wind_angle_previous_1': self.wind_angle[1],
             'wind_angle_previous_2': self.wind_angle[2],
@@ -55,11 +55,11 @@ class WeatherSnapshot:
             'wind_angle_previous_4': self.wind_angle[4],
             'wind_angle_previous_5': self.wind_angle[5],
             'wind_direction': self.wind_direction,
-            'wind_chill': self.wind_chill,
-            'rain_1h': self.rain_1h,
-            'rain_24h': self.rain_24h,
-            'rain_total': self.rain_total,
-            'rel_pressure': self.rel_pressure,
+            'wind_chill': self._measurement(self.wind_chill),
+            'rain_1h': self._measurement(self.rain_1h),
+            'rain_24h': self._measurement(self.rain_24h),
+            'rain_total': self._measurement(self.rain_total),
+            'rel_pressure': self._measurement(self.rel_pressure),
             'tendency': self.tendency,
             'forecast': self.forecast,
             'station_datetime': self._timestamp_string(self.station_datetime),
@@ -68,6 +68,11 @@ class WeatherSnapshot:
 
     def mqtt_payload(self):
         return json.dumps(self.mqtt_dict(), separators=(',', ':'), sort_keys=True)
+
+    @staticmethod
+    def _measurement(value):
+        """Match the one-decimal precision used by the PostgreSQL schema."""
+        return round(value, 1)
 
     @staticmethod
     def _timestamp_string(timestamp):

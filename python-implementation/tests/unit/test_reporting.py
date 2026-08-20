@@ -3,7 +3,7 @@
 from types import SimpleNamespace
 
 from pyopen2300.mqtt import MQTTPublisher
-from pyopen2300.reporting import collect_weather_snapshot
+from pyopen2300.reporting import WeatherSnapshot, collect_weather_snapshot
 
 
 class Timestamp:
@@ -68,3 +68,19 @@ def test_mqtt_topic_uses_optional_station():
     assert MQTTPublisher(config).state_topic == 'open2300/'
     config.mqtt_station = 'rpi'
     assert MQTTPublisher(config).state_topic == 'open2300/rpi'
+
+
+def test_mqtt_measurements_are_rounded_to_schema_precision():
+    snapshot = WeatherSnapshot(
+        temperature_indoor=20.0, temperature_outdoor=10.0,
+        dewpoint=8.839999999999996, humidity_indoor=50, humidity_outdoor=60,
+        wind_speed_min=1.04, wind_speed_max=2.06, wind_speed=1.05,
+        wind_angle=[0, 1, 2, 3, 4, 5], wind_direction='N', wind_chill=9.94,
+        rain_1h=0.04, rain_24h=0.16, rain_total=1.26,
+        rel_pressure=1013.04, tendency='Steady', forecast='Sunny',
+        station_datetime=Timestamp(),
+    )
+
+    data = snapshot.mqtt_dict()
+    assert data['dewpoint'] == 8.8
+    assert data['rel_pressure'] == 1013.0
