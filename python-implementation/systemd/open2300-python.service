@@ -1,0 +1,12 @@
+[Unit]
+Description=Log WS2300 data with Python open2300
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=weather
+Group=weather
+WorkingDirectory=/opt/open2300
+ExecStart=/opt/open2300/.venv/bin/pgsql2300 /opt/open2300/open2300.conf
+TimeoutStartSec=90

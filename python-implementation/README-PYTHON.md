@@ -34,6 +34,21 @@ PyOpen2300 is a complete Python port of the original C-based open2300 project (v
 
 ### Install from source
 
+For a Linux system using systemd, the Makefile installs the Python package,
+virtual environment, configuration, and timer under `/opt/open2300`:
+
+```bash
+cd python-implementation
+make install          # Debian/Ubuntu/x86 systems
+make install-rpi      # Raspberry Pi OS
+sudo make enable
+```
+
+The installer creates or reuses the `weather` system user and adds it to
+`dialout` for serial-port access. Edit `/opt/open2300/open2300.conf` before
+enabling the timer. The installed units are `open2300-python.service` and
+`open2300-python.timer`; the timer runs every minute.
+
 **On x86/x64 systems (Linux, macOS, Windows):**
 ```bash
 cd open2300
