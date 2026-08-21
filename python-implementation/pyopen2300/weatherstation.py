@@ -182,9 +182,8 @@ class WeatherStation:
         "Occasionally 0, then 2 is returned. If zero comes back, continue
         reading as this is more efficient than sending an out-of sync
         reset and letting the data reads restore synchronization.
-        Occasionally, multiple 2's are returned. Read with a fast timeout
-        until all data is exhausted, if we got a two back at all, we
-        consider it a success"
+        Occasionally, multiple 2's are returned. The first 2 means the
+        reset succeeded, so return immediately as the C implementation does."
         """
         debug_print("reset_06: Starting reset sequence")
         command = bytes([0x06])
@@ -209,12 +208,10 @@ class WeatherStation:
             # time.sleep(0.01)  # 10ms delay (enough for 2-3 bytes at 2400 baud)
             debug_print("reset_06: Waiting for response...")
             
-            # Read responses until we get a 2 OR timeout
-            # Keep reading as long as data comes back
+            # Read responses until we get a 2 OR timeout.
             # The station may send 0x00 first, then 0x02
-            # This matches the C implementation which reads until no more data
+            # The C implementation returns as soon as it receives 0x02.
             read_count = 0
-            got_two = False
             while True:
                 debug_print(f"reset_06: Reading response byte {read_count+1}")
                 answer = self.device.read(1)
@@ -226,18 +223,13 @@ class WeatherStation:
                 debug_print(f"reset_06: Received byte {read_count}: 0x{answer[0]:02x}")
                 if answer[0] == 2:
                     debug_print(f"reset_06: Got 0x02 at byte {read_count}")
-                    got_two = True
-                    # Keep reading to drain any additional 0x02 bytes
+                    debug_print(f"reset_06: SUCCESS - received 0x02")
+                    return
                 elif answer[0] == 0:
                     debug_print(f"reset_06: Got 0x00 at byte {read_count}, continuing...")
                     # Continue reading, 0x02 may follow
                 else:
                     debug_print(f"reset_06: Got unexpected byte 0x{answer[0]:02x}")
-            
-            # If we got a 0x02 at any point, consider it success
-            if got_two:
-                debug_print(f"reset_06: SUCCESS - received 0x02 (total {read_count} bytes read)")
-                return
             
             debug_print(f"reset_06: No 0x02 received in {read_count} bytes")
             
@@ -1225,6 +1217,15 @@ class WeatherStation:
         time_max.year = 2000 + ((data[10] >> 4) * 10) + (data[10] & 0xF)
         
         return rain_1h, rain_1h_max, time_max
+
+    def rain_1h(self, rain_conv_factor: float = 1.0) -> float:
+        """Read current rain for the last hour only."""
+        data = self.read_safe(0x4B4, 3)
+        if data is None:
+            raise IOError("Failed to read rain 1h")
+        return ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                (data[1] >> 4) * 10 + (data[1] & 0xF) +
+                (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) / rain_conv_factor
     
     def rain_24h_all(self, rain_conv_factor: float = 1.0) -> Tuple[float, float, Timestamp]:
         """
@@ -1256,6 +1257,15 @@ class WeatherStation:
         time_max.year = 2000 + ((data[10] >> 4) * 10) + (data[10] & 0xF)
         
         return rain_24h, rain_24h_max, time_max
+
+    def rain_24h(self, rain_conv_factor: float = 1.0) -> float:
+        """Read current rain for the last 24 hours only."""
+        data = self.read_safe(0x497, 3)
+        if data is None:
+            raise IOError("Failed to read rain 24h")
+        return ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                (data[1] >> 4) * 10 + (data[1] & 0xF) +
+                (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) / rain_conv_factor
     
     def rain_total_all(self, rain_conv_factor: float = 1.0) -> Tuple[float, Timestamp]:
         """
@@ -1283,6 +1293,15 @@ class WeatherStation:
         time_since.year = 2000 + ((data[7] >> 4) * 10) + (data[7] & 0xF)
         
         return rain_total, time_since
+
+    def rain_total(self, rain_conv_factor: float = 1.0) -> float:
+        """Read accumulated rain total only."""
+        data = self.read_safe(0x4D2, 3)
+        if data is None:
+            raise IOError("Failed to read rain total")
+        return ((data[2] >> 4) * 1000 + (data[2] & 0xF) * 100 +
+                (data[1] >> 4) * 10 + (data[1] & 0xF) +
+                (data[0] >> 4) / 10.0 + (data[0] & 0xF) / 100.0) / rain_conv_factor
     
     def rel_pressure_minmax(self, pressure_conv_factor: float = 1.0) -> Tuple[float, float, Timestamp, Timestamp]:
         """

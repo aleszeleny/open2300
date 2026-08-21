@@ -34,6 +34,21 @@ PyOpen2300 is a complete Python port of the original C-based open2300 project (v
 
 ### Install from source
 
+For a Linux system using systemd, the Makefile installs the Python package,
+virtual environment, configuration, and timer under `/opt/open2300`:
+
+```bash
+cd python-implementation
+make install          # Debian/Ubuntu/x86 systems
+make install-rpi      # Raspberry Pi OS
+sudo make enable
+```
+
+The installer creates or reuses the `weather` system user and adds it to
+`dialout` for serial-port access. Edit `/opt/open2300/open2300.conf` before
+enabling the timer. The installed units are `open2300-python.service` and
+`open2300-python.timer`; the timer runs every minute.
+
 **On x86/x64 systems (Linux, macOS, Windows):**
 ```bash
 cd open2300
@@ -76,7 +91,7 @@ sudo usermod -a -G dialout $USER
 Copy the example configuration file:
 
 ```bash
-cp open2300-dist.conf open2300.conf
+cp python-implementation/open2300-dist.conf open2300.conf
 ```
 
 Edit `open2300.conf` to set your serial device and preferences:
@@ -155,6 +170,16 @@ The tools will search for the config file in these locations (in order):
   pgsql2300 [config_file]
   ```
 
+- **mqtt2300** - Publish one retained JSON weather snapshot to MQTT
+  ```bash
+  mqtt2300 [config_file]
+  ```
+
+- **pgsql2300-daemon** - Continuously report to PostgreSQL and optional MQTT
+  ```bash
+  pgsql2300-daemon --config open2300.conf
+  ```
+
 - **sqlitelog2300** - Log to SQLite database
   ```bash
   sqlitelog2300 weather.db [config_file]
@@ -172,6 +197,11 @@ The tools will search for the config file in these locations (in order):
    PGSQL_TABLE weather
    PGSQL_STATION mystation
    ```
+
+MQTT reporting is enabled by setting `MQTT_HOST`. The default state topic is
+`open2300/<MQTT_STATION>`, and Home Assistant discovery is enabled with
+`MQTT_HA_DISCOVERY true`. The daemon adds retained availability and LWT;
+one-shot commands publish state/discovery only.
 
 ### SQLite
 
@@ -268,4 +298,3 @@ See the COPYING file for details.
 For issues specific to the Python implementation, check the code comments and compare with the original C implementation.
 
 For weather station hardware issues, refer to the original open2300 documentation.
-
